@@ -1430,16 +1430,16 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "fastapi", specifier = ">=0.135.1" },
-    { name = "groq", specifier = ">=1.1.1" },
-    { name = "networkx", specifier = ">=3.6.1" },
-    { name = "pydantic", specifier = ">=2.12.5" },
-    { name = "python-dotenv", specifier = ">=1.2.2" },
-    { name = "sentence-transformers", specifier = ">=5.3.0" },
-    { name = "skillner", specifier = ">=1.0.3" },
-    { name = "spacy", specifier = ">=3.8.11" },
-    { name = "transformers", specifier = ">=5.3.0" },
-    { name = "uvicorn", specifier = ">=0.42.0" },
+    { name = "fastapi", specifier = "==0.135.1" },
+    { name = "groq", specifier = "==1.1.1" },
+    { name = "networkx", specifier = "==3.6.1" },
+    { name = "pydantic", specifier = "==2.12.5" },
+    { name = "python-dotenv", specifier = "==1.2.2" },
+    { name = "sentence-transformers", specifier = "==5.3.0" },
+    { name = "skillner", specifier = "==1.0.3" },
+    { name = "spacy", specifier = "==3.8.11" },
+    { name = "transformers", specifier = "==5.3.0" },
+    { name = "uvicorn", specifier = "==0.42.0" },
 ]
 
 [[package]]

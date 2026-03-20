@@ -18,50 +18,67 @@ This is the FastAPI backend for the SkillBridge AI-adaptive onboarding engine.
 
 ## Setup
 
-1. Install dependencies:
+The project uses [uv](https://github.com/astral-sh/uv) for fast, deterministic dependency management.
+
+### 1. Install uv
+If you don't have `uv` installed, follow the [installation guide](https://github.com/astral-sh/uv#installation).
+
+### 2. Create Environment and Install Dependencies
 ```bash
-pip install fastapi uvicorn networkx pydantic
+uv sync
 ```
+This command automatically creates a virtual environment, syncs `uv.lock` with `pyproject.toml`, and installs all dependencies.
 
-2. Run the server:
+> **Note:** We use `pyproject.toml` and `uv.lock` as the primary source of truth for dependencies. Avoid using `requirements.txt` unless absolutely necessary (e.g., for legacy CI/CD environments).
+
+### 3. Download Required Models
+The skill extraction pipeline requires the large spaCy English model:
 ```bash
-python -m app.main
-```
-The API will be available at `http://localhost:8000`.
-
-## API Endpoints
-
-### POST /api/analyze
-Analyzes a resume and job description.
-
-**Request Body:**
-```json
-{
-  "resume_text": "...",
-  "jd_text": "..."
-}
+uv run python -m spacy download en_core_web_lg
 ```
 
-**Response:**
-Returns a `PipelineState` object matching the frontend contract.
+### 4. Configure Environment Variables
+Copy the `.env.example` file to `.env` and add your Groq API key:
+```bash
+cp .env.example .env
+```
+Open `.env` and set:
+`GROQ_API_KEY=your_actual_api_key_here`
+
+### 5. Run the Server
+```bash
+uv run python -m app.main
+```
+The API will be available at `http://localhost:8000`. You can view the interactive documentation at `http://localhost:8000/docs`.
 
 ## Testing
 
-Run unit tests:
+Ensure you run tests through `uv run` to use the managed environment:
+
+### Run All Unit Tests
 ```bash
-export PYTHONPATH=$PYTHONPATH:.
-pytest tests/
+uv run pytest tests/
 ```
 
-Run isolated DAG experiment:
+### Run NLP Pipeline Integration Test (Extractor)
 ```bash
-python experiments/test_kahn.py
+uv run python experiments/test_nlp_pipeline.py
 ```
 
-Run end-to-end pipeline verification:
+### Run Pathing Engine Experiment
 ```bash
-export PYTHONPATH=$PYTHONPATH:.
-python experiments/test_full_pipeline.py
+uv run python experiments/test_kahn.py
+```
+
+### Run Full End-to-End Pipeline Verification
+```bash
+uv run python experiments/test_full_pipeline.py
+```
+
+## Maintenance: Keeping requirements.txt updated
+For legacy compatibility, we keep an exported `requirements.txt`. To update it after changing dependencies in `pyproject.toml`:
+```bash
+uv lock && uv export --format requirements-txt > requirements.txt
 ```
 
 ## Implementation Details
