@@ -1,10 +1,17 @@
+"""
+Set intersection logic for skill gap analysis.
+Skill Gap URIs = Target JD URIs − User Mastered URIs
+Recursive subgraph pull-ins for prerequisites.
+"""
+
 from typing import List, Set, Dict, Any
 import networkx as nx
 from app.state import SkillEntry
 
+# Mastery threshold: >= 0.85 means "mastered" (bypassed)
 MASTERY_THRESHOLD = 0.85
 
-def get_skill_gap(extracted_skills: List[SkillEntry], required_skills: List[str]) -> List[str]:
+def compute_skill_gap(extracted_skills: List[SkillEntry], required_skills: List[str]) -> List[str]:
     """
     Computes skill gap: required_skills - mastered_skills.
     :param extracted_skills: Skills from user's resume with mastery scores.

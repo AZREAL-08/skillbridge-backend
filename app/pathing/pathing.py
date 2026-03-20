@@ -3,7 +3,7 @@ import networkx as nx
 from app.state import PipelineState, CurrentState, TargetState, SkillEntry, PathwayCourse, Metrics
 from app.pathing.dag_builder import build_dag
 from app.catalog.loader import load_catalog
-from app.pathing.gap_analyzer import get_skill_gap, get_active_subgraph
+from app.pathing.gap_analyzer import compute_skill_gap, get_active_subgraph
 from app.pathing.kahn import kahn_priority_sort
 from app.pathing.tracer import generate_reasoning_trace
 
@@ -19,29 +19,6 @@ def mock_extract(resume_text: str) -> List[SkillEntry]:
         {"esco_uri": "logic-001", "label": "Logic", "mastery_score": 0.95, "confidence_score": 0.99},
         {"esco_uri": "db-001", "label": "Database Knowledge", "mastery_score": 0.1, "confidence_score": 0.7}
     ]
-
-def calculate_priority(course_data: Dict[str, Any], skill_gap: List[str], extracted_skills: List[SkillEntry]) -> float:
-    """
-    priority = (skill_gap_count * (1 - mastery_score)) / (estimated_hours + 1e-5)
-    """
-    gap_set = set(skill_gap)
-    taught = course_data.get('skills_taught', [])
-    skill_gap_count = len([s for s in taught if s in gap_set])
-    
-    # Average mastery of skills taught by this course
-    masteries = []
-    for esco in taught:
-        m = 0.0
-        for s in extracted_skills:
-            if s['esco_uri'] == esco:
-                m = s['mastery_score']
-                break
-        masteries.append(m)
-    
-    avg_mastery = sum(masteries) / len(masteries) if masteries else 0.0
-    estimated_hours = course_data.get('estimated_hours', 1.0)
-    
-    return (skill_gap_count * (1 - avg_mastery)) / (estimated_hours + 1e-5)
 
 def run_pipeline(resume_text: str, jd_text: str) -> PipelineState:
     # 1. Load catalog and build DAG
@@ -84,18 +61,39 @@ def run_pipeline(resume_text: str, jd_text: str) -> PipelineState:
     required_skills = ["python-001", "sql-001", "git-001"]
     
     # 4. Compute gap
-    skill_gap = get_skill_gap(extracted_skills, required_skills)
+    skill_gap = compute_skill_gap(extracted_skills, required_skills)
     
     # 5. Identify active subgraph
     node_states = get_active_subgraph(G, skill_gap, extracted_skills)
     active_node_ids = list(node_states.keys())
     
-    # 6. Precompute priorities for Kahn sort
+    # 6. Precompute metadata for Kahn sort
     course_metadata = {}
+    gap_set = set(skill_gap)
     for cid in active_node_ids:
-        meta = G.nodes[cid].copy()
-        meta['priority'] = calculate_priority(meta, skill_gap, extracted_skills)
-        course_metadata[cid] = meta
+        meta = G.nodes[cid]
+        
+        # Calculate gap_count, mastery, hours for kahn priority
+        taught = meta.get('skills_taught', [])
+        gap_count = len([s for s in taught if s in gap_set])
+        
+        # Average mastery of skills taught by this course
+        masteries = []
+        for esco in taught:
+            m = 0.0
+            for s in extracted_skills:
+                if s['esco_uri'] == esco:
+                    m = s['mastery_score']
+                    break
+            masteries.append(m)
+        avg_mastery = sum(masteries) / len(masteries) if masteries else 0.0
+        
+        course_metadata[cid] = {
+            "prerequisites": meta.get('prerequisites', []),
+            "gap_count": gap_count,
+            "mastery": avg_mastery,
+            "hours": meta.get('estimated_hours', 1.0)
+        }
         
     # 7. Topological Sort
     sorted_ids = kahn_priority_sort(active_node_ids, course_metadata)
@@ -135,8 +133,6 @@ def run_pipeline(resume_text: str, jd_text: str) -> PipelineState:
             )
             reasoning_traces.append(trace)
             
-    # Include skipped nodes in reasoning_trace? Blueprint doesn't require it.
-    
     # 9. Compute Metrics
     baseline_courses = len(catalog)
     reduction_pct = 0.0

@@ -1,10 +1,26 @@
+"""
+FastAPI entry point — /api/analyze
+"""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from app.pathing.pathing import run_pipeline
 from app.state import PipelineState
 
-app = FastAPI(title="SkillBridge AI Onboarding Engine")
+# ---------------------------------------------------------------------------
+# Request schema
+# ---------------------------------------------------------------------------
+
+class AnalyzeRequest(BaseModel):
+    resume_text: str
+    jd_text: str
+
+# ---------------------------------------------------------------------------
+# App setup
+# ---------------------------------------------------------------------------
+
+app = FastAPI(title="SkillBridge Engine", version="0.1.0")
 
 # Configure CORS for frontend
 app.add_middleware(
@@ -15,13 +31,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class AnalyzeRequest(BaseModel):
-    resume_text: str
-    jd_text: str
+# ---------------------------------------------------------------------------
+# Routes
+# ---------------------------------------------------------------------------
 
 @app.post("/api/analyze", response_model=PipelineState)
 async def analyze(request: AnalyzeRequest):
     """
+    Full pipeline: extract_skills → compute_gap → run_kahn → generate_traces
     Analyzes resume and JD to compute skill gap and generate a learning pathway.
     """
     result = run_pipeline(request.resume_text, request.jd_text)
