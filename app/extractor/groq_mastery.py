@@ -12,7 +12,7 @@ _GROQ_CLIENT   = None
 def _get_groq_client() -> Groq:
     global _GROQ_CLIENT
     if _GROQ_CLIENT is None:
-        api_key = os.getenv("GROQ_API_KEY") # NEVER hardcode this!
+        api_key = os.getenv("GROQ_API_KEY")
         if not api_key:
             raise EnvironmentError("[GroqMastery] GROQ_API_KEY environment variable is not set.")
         _GROQ_CLIENT = Groq(api_key=api_key)
