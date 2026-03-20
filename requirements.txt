@@ -92,3 +92,10 @@ uvicorn==0.42.0
 wasabi==1.1.3
 weasel==0.4.3
 wrapt==2.1.2
+
+# --- Track 2 NLP Dependencies ---
+spacy==3.7.4
+skillner==1.0.4
+transformers==4.38.2
+sentence-transformers==2.5.1
+groq==0.4.2
