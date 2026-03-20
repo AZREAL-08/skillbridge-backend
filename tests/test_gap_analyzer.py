@@ -1,15 +1,15 @@
 import networkx as nx
-from app.pathing.gap_analyzer import get_skill_gap, get_active_subgraph
+from app.pathing.gap_analyzer import compute_skill_gap, get_active_subgraph
 from app.state import SkillEntry
 
-def test_get_skill_gap():
+def test_compute_skill_gap():
     extracted = [
         {"esco_uri": "s1", "label": "L1", "mastery_score": 0.9, "confidence_score": 1.0},
         {"esco_uri": "s2", "label": "L2", "mastery_score": 0.5, "confidence_score": 1.0},
     ]
     required = ["s1", "s2", "s3"]
     # s1 is mastered (0.9 >= 0.85), so gap should be s2, s3
-    gap = get_skill_gap(extracted, required)
+    gap = compute_skill_gap(extracted, required)
     assert set(gap) == {"s2", "s3"}
 
 def test_get_active_subgraph_with_prereq():
