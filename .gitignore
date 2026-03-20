@@ -17,3 +17,7 @@ build/
 dataset/
 ESCO.zip
 .DS_Store
+.env
+skill_db_relax_20.json
+token_dist.json
+__pycache__/
