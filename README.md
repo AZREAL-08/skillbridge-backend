@@ -57,7 +57,8 @@ Ensure you run tests through `uv run` to use the managed environment:
 
 ### Run All Unit Tests
 ```bash
-uv run python -m pytest tests/
+uv run python -m tests.test_kahn
+uv run python -m tests.test_gap_analyzer
 ```
 
 ### Run NLP Pipeline Integration Test (Extractor)

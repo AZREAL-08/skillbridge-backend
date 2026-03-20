@@ -1,0 +1,247 @@
+[
+  {
+    "taxonomy_id": "KS127296VDYS7ZFWVC46",
+    "taxonomy_source": "emsi",
+    "label": "node js",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "ESAD92AA2437BEF8C136",
+    "taxonomy_source": "emsi",
+    "label": "express js",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS122QR6WQ8M7BLY05B3",
+    "taxonomy_source": "emsi",
+    "label": "database schema",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS122C775KRX1DK8Q1RQ",
+    "taxonomy_source": "emsi",
+    "label": "continuous integration",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS9ZSS5UNBOR9NT1GMGF",
+    "taxonomy_source": "emsi",
+    "label": "delivery pipeline",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS4415B77WWH2WCSVHCV",
+    "taxonomy_source": "emsi",
+    "label": "system design",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS4401V5WX78L6JX0NW7",
+    "taxonomy_source": "emsi",
+    "label": "restful api",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS1222C6WKYWRKRXQCR0",
+    "taxonomy_source": "emsi",
+    "label": "version control",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS1222G6RD9GBB7Q6FY5",
+    "taxonomy_source": "emsi",
+    "label": "code review",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS1220H6CP1BQGH9STNK",
+    "taxonomy_source": "emsi",
+    "label": "cloud computing",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KSDJCA4E89LB98JAZ7LZ",
+    "taxonomy_source": "emsi",
+    "label": "react js",
+    "mastery_score": 0.2,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS1208P6ZMZ4N872Y7X5",
+    "taxonomy_source": "emsi",
+    "label": "api",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS440QS66YCBN23Y8K25",
+    "taxonomy_source": "emsi",
+    "label": "software",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS7R8G2D52QH187SED9R",
+    "taxonomy_source": "emsi",
+    "label": "backend",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS125TB6YR6236RKM563",
+    "taxonomy_source": "emsi",
+    "label": "postgresql",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS122QL6NN356RRJT6RV",
+    "taxonomy_source": "emsi",
+    "label": "design database",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS4425C7820LCHZS7VGX",
+    "taxonomy_source": "emsi",
+    "label": "write",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KSY4WFI1S164RQUBSPCC",
+    "taxonomy_source": "emsi",
+    "label": "docker",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS124CH623PFBJS8T5KM",
+    "taxonomy_source": "emsi",
+    "label": "github",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS124RX787SQ1WVD8XF6",
+    "taxonomy_source": "emsi",
+    "label": "scalable",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KSZX7YZWNR5IDR1I2VMZ",
+    "taxonomy_source": "emsi",
+    "label": "microservices",
+    "mastery_score": 0.2,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KSS344MJ1FTC11D417OQ",
+    "taxonomy_source": "emsi",
+    "label": "apis design",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS124ZQ6RS1V188JSCTX",
+    "taxonomy_source": "emsi",
+    "label": "best practices",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KSIWWZAII4AP33SDVZ2H",
+    "taxonomy_source": "emsi",
+    "label": "git",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS4424T6KPTTQ1NKM0XK",
+    "taxonomy_source": "emsi",
+    "label": "workflows",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS1200771D9CR9LB4MWW",
+    "taxonomy_source": "emsi",
+    "label": "javascript",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS441LF7187KS0CV4B6Y",
+    "taxonomy_source": "emsi",
+    "label": "typescript",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS128G66RG96FZNHFCXY",
+    "taxonomy_source": "emsi",
+    "label": "redis",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS124T66K0SY8B8G77LX",
+    "taxonomy_source": "emsi",
+    "label": "high performance",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS1220G70HW5N3HHQW5N",
+    "taxonomy_source": "emsi",
+    "label": "applications cloud",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS1218W78FGVPVP2KXPX",
+    "taxonomy_source": "emsi",
+    "label": "manage",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "ES2E621C4D8134E1782A",
+    "taxonomy_source": "emsi",
+    "label": "cloud platforms",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS4400B70JFSWXTYH0P2",
+    "taxonomy_source": "emsi",
+    "label": "nice",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "ES2D2CA3BC2F2587FAAC",
+    "taxonomy_source": "emsi",
+    "label": "agile development",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS128446WNQLT2W3Z25J",
+    "taxonomy_source": "emsi",
+    "label": "development methodology",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  }
+]

@@ -1,0 +1,345 @@
+[
+  {
+    "taxonomy_id": "KS441ZY6P0PDB5DWTRB8",
+    "taxonomy_source": "emsi",
+    "label": "web application",
+    "mastery_score": 0.8,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KSDJCA4E89LB98JAZ7LZ",
+    "taxonomy_source": "emsi",
+    "label": "react js",
+    "mastery_score": 0.9,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS2UJ31ABTM22Y2MHEQM",
+    "taxonomy_source": "emsi",
+    "label": "custom component",
+    "mastery_score": 0.8,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS1222G6RD9GBB7Q6FY5",
+    "taxonomy_source": "emsi",
+    "label": "code review",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS1228S6YKWXMH4M4DL7",
+    "taxonomy_source": "emsi",
+    "label": "conflict resolution",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS127296VDYS7ZFWVC46",
+    "taxonomy_source": "emsi",
+    "label": "node js",
+    "mastery_score": 0.4,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "ESAD92AA2437BEF8C136",
+    "taxonomy_source": "emsi",
+    "label": "express js",
+    "mastery_score": 0.4,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS440H66BML35BBRFCTK",
+    "taxonomy_source": "emsi",
+    "label": "server side",
+    "mastery_score": 0.4,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "ES57AC32F3207A1E9577",
+    "taxonomy_source": "emsi",
+    "label": "sprint planning",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS8TU0J0IOFIJUU9VS4H",
+    "taxonomy_source": "emsi",
+    "label": "load time",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS1208P6ZMZ4N872Y7X5",
+    "taxonomy_source": "emsi",
+    "label": "api",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS1200578T5QCYT0Z98G",
+    "taxonomy_source": "emsi",
+    "label": "html",
+    "mastery_score": 0.8,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS121F45VPV8C9W3QFYH",
+    "taxonomy_source": "emsi",
+    "label": "css",
+    "mastery_score": 0.8,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS440GJ6ML4G40B67460",
+    "taxonomy_source": "emsi",
+    "label": "seo",
+    "mastery_score": 0.4,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS124RX787SQ1WVD8XF6",
+    "taxonomy_source": "emsi",
+    "label": "scalable",
+    "mastery_score": 0.8,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS122086PPY11B2M1G6N",
+    "taxonomy_source": "emsi",
+    "label": "libraries",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS1218W78FGVPVP2KXPX",
+    "taxonomy_source": "emsi",
+    "label": "management",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KSQOOX1S2DYD0E1VVZ5X",
+    "taxonomy_source": "emsi",
+    "label": "redux",
+    "mastery_score": 0.8,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS1227V6GK3GDKLR52KN",
+    "taxonomy_source": "emsi",
+    "label": "rendering",
+    "mastery_score": 0.8,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS1200771D9CR9LB4MWW",
+    "taxonomy_source": "emsi",
+    "label": "javascript",
+    "mastery_score": 0.9,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS441LF7187KS0CV4B6Y",
+    "taxonomy_source": "emsi",
+    "label": "typescript",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS124ZQ6RS1V188JSCTX",
+    "taxonomy_source": "emsi",
+    "label": "best practices",
+    "mastery_score": 0.6,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS440FZ66QFPWRRTYF6J",
+    "taxonomy_source": "emsi",
+    "label": "semantic",
+    "mastery_score": 0.8,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS120RM619V18NJXTHV1",
+    "taxonomy_source": "emsi",
+    "label": "html5",
+    "mastery_score": 0.8,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS4401Q6TM90DBQSF645",
+    "taxonomy_source": "emsi",
+    "label": "responsive design",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KSG8V19PB8K7PM95X4HW",
+    "taxonomy_source": "emsi",
+    "label": "flexbox",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS123DP6P11B5VCXQ694",
+    "taxonomy_source": "emsi",
+    "label": "design systems",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS1256Z6HDJ91HWJ615M",
+    "taxonomy_source": "emsi",
+    "label": "product teams",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KSIWWZAII4AP33SDVZ2H",
+    "taxonomy_source": "emsi",
+    "label": "git",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS4424T6KPTTQ1NKM0XK",
+    "taxonomy_source": "emsi",
+    "label": "workflow",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS125716TLTGH6SDHJD1",
+    "taxonomy_source": "emsi",
+    "label": "integration",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS124CH623PFBJS8T5KM",
+    "taxonomy_source": "emsi",
+    "label": "github",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS4401V5WX78L6JX0NW7",
+    "taxonomy_source": "emsi",
+    "label": "rest apis",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS125R96VYB8GM02DSMV",
+    "taxonomy_source": "emsi",
+    "label": "layers",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KSNN1KZQTC3W3G9J42QL",
+    "taxonomy_source": "emsi",
+    "label": "openapi",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS7YXWLEAKN8QOFDFVS2",
+    "taxonomy_source": "emsi",
+    "label": "postman",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS1285T645JRKKFWSV0W",
+    "taxonomy_source": "emsi",
+    "label": "prototyping",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS7R8G2D52QH187SED9R",
+    "taxonomy_source": "emsi",
+    "label": "backend",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS440W865GC4VRBW6LJP",
+    "taxonomy_source": "emsi",
+    "label": "sql",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS122SG5Y0Q5YQM7V8KT",
+    "taxonomy_source": "emsi",
+    "label": "debugging",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS122P063X6NGMHLP002",
+    "taxonomy_source": "emsi",
+    "label": "data extraction",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS1289Y78X8HDRH2PLM8",
+    "taxonomy_source": "emsi",
+    "label": "optimized queries",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS120BC6BLYD8GXK5DSW",
+    "taxonomy_source": "emsi",
+    "label": "agile",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS7G6XM6NHD5NMYBXMHK",
+    "taxonomy_source": "emsi",
+    "label": "scrum master",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "ES76F4C57A88877D6D64",
+    "taxonomy_source": "emsi",
+    "label": "professional",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS1218L60PDVZX16NZT1",
+    "taxonomy_source": "emsi",
+    "label": "dashboard",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "ESC67B4D284220100378",
+    "taxonomy_source": "emsi",
+    "label": "web app",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS4424P6G7QVWXC3B756",
+    "taxonomy_source": "emsi",
+    "label": "wordpress",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "ESE80B169A55ACA65FEB",
+    "taxonomy_source": "emsi",
+    "label": "landing pages",
+    "mastery_score": 0.3,
+    "confidence_score": 0.7
+  }
+]
