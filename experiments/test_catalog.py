@@ -1,0 +1,1 @@
+# Sandbox: Validate catalog structure
