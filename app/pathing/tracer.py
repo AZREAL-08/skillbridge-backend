@@ -45,7 +45,7 @@ def generate_reasoning_trace(
     :param course_id: The ID of the course.
     :param node_state: "assigned" or "prerequisite".
     :param course_metadata: Metadata for this course.
-    :param skill_gap: User's skill gap ESCO URIs.
+    :param skill_gap: User's skill gap taxonomy IDs.
     :param extracted_skills: User's extracted skills with mastery scores.
     :param dependent_course_title: Title of the course that depends on this one (for prerequisites).
     :return: Formatted trace string.
@@ -66,13 +66,13 @@ def generate_reasoning_trace(
         label = "core competencies"
         mastery = 0.0
     else:
-        esco_uri = relevant_skills[0]
+        taxonomy_id = relevant_skills[0]
         # Find skill label and mastery from extracted_skills
-        label = esco_uri
+        label = taxonomy_id
         mastery = 0.0
         for s in extracted_skills:
-            if s['esco_uri'] == esco_uri:
-                label = s.get('label', esco_uri)
+            if s['taxonomy_id'] == taxonomy_id:
+                label = s.get('label', taxonomy_id)
                 mastery = s.get('mastery_score', 0.0)
                 break
                 

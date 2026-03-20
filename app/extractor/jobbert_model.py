@@ -18,11 +18,16 @@ CRITICAL FIX 2 — B/I span stitching:
     spans under the bare label scheme, splitting "machine learning" into two
     separate entries. We implement a manual stitching pass using char offsets
     from the original text to recover the exact surface form.
+
+EMSI MAPPING:
+    After extracting spans, each is run through SkillNER's PhraseMatcher to
+    attempt EMSI ID mapping. Successfully mapped spans get source="emsi",
+    unmapped spans get source="inferred" with a synthetic ID.
 """
 
 import logging
 import re
-from typing import List, Optional
+from typing import List, Dict, Optional
 
 from transformers import (
     AutoModelForTokenClassification,
@@ -30,6 +35,8 @@ from transformers import (
     pipeline,
     Pipeline,
 )
+
+from app.extractor.skillner_model import map_span_to_emsi
 
 logger = logging.getLogger(__name__)
 
@@ -66,21 +73,22 @@ def _get_pipeline() -> Pipeline:
     return _pipe
 
 
-def extract_implicit_skills(text: str) -> List[str]:
+def extract_implicit_skills(text: str) -> List[Dict[str, str]]:
     """
     Extract implicitly described skill phrases from experience or
     responsibility-style text using JobBERT token classification.
 
-    Best input style: job-posting or responsibility language.
-        GOOD: "Required skills include Python and machine learning."
-        WEAK: "I know Python."  (resume-style; lower model confidence)
+    After extraction, each span is run through SkillNER to attempt EMSI
+    mapping. Spans that match get source="emsi"; unmatched spans are kept
+    as source="inferred" with a synthetic taxonomy ID.
 
     Args:
         text: Raw text string — resume bullet points or job descriptions.
 
     Returns:
-        Deduplicated list of stitched skill phrase strings (lowercased).
-        e.g. ["python", "machine learning", "rest api development"]
+        List of skill dicts, each with:
+            {"skill_id": str, "label": str, "source": str}
+        where source is "emsi" or "inferred".
 
         Returns empty list on empty input or extraction failure.
 
@@ -103,12 +111,50 @@ def extract_implicit_skills(text: str) -> List[str]:
         stitched = _stitch_spans(raw_spans, text)
         deduped  = _deduplicate(stitched)
 
-        logger.info("[JobBERT] Extracted %d unique skill phrases.", len(deduped))
-        return deduped
+        # Map each span to EMSI or mark as inferred
+        mapped = _map_spans_to_taxonomy(deduped)
+
+        logger.info("[JobBERT] Extracted %d unique skill phrases.", len(mapped))
+        return mapped
 
     except Exception as exc:
         logger.error("[JobBERT] Extraction failed: %s", exc, exc_info=True)
         return []
+
+
+def _map_spans_to_taxonomy(spans: List[str]) -> List[Dict[str, str]]:
+    """
+    For each extracted span, attempt EMSI mapping via SkillNER.
+    Falls back to inferred taxonomy for unmappable spans.
+    """
+    results: List[Dict[str, str]] = []
+    seen_ids: set = set()
+
+    for span in spans:
+        emsi_match = map_span_to_emsi(span)
+
+        if emsi_match:
+            skill_id = emsi_match["skill_id"]
+            if skill_id not in seen_ids:
+                seen_ids.add(skill_id)
+                results.append({
+                    "skill_id": skill_id,
+                    "label": emsi_match["label"],
+                    "source": "emsi",
+                })
+                logger.debug("[JobBERT] Mapped '%s' → EMSI '%s'", span, skill_id)
+        else:
+            synthetic_id = f"inferred::{span[:30]}"
+            if synthetic_id not in seen_ids:
+                seen_ids.add(synthetic_id)
+                results.append({
+                    "skill_id": synthetic_id,
+                    "label": span,
+                    "source": "inferred",
+                })
+                logger.debug("[JobBERT] Inferred skill: '%s'", span)
+
+    return results
 
 
 def _stitch_spans(spans: list, original_text: str) -> List[str]:

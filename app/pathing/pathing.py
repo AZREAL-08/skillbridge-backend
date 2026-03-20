@@ -17,11 +17,11 @@ def mock_extract_skills(resume_text: str) -> List[SkillEntry]:
     Provides deterministic data for testing the pathing engine.
     """
     return [
-        {"esco_uri": "python-001", "label": "Python Programming", "mastery_score": 0.4, "confidence_score": 0.9},
-        {"esco_uri": "git-001", "label": "Git Version Control", "mastery_score": 0.9, "confidence_score": 0.95},
-        {"esco_uri": "sql-001", "label": "SQL Database", "mastery_score": 0.2, "confidence_score": 0.8},
-        {"esco_uri": "logic-001", "label": "Logic", "mastery_score": 0.95, "confidence_score": 0.99},
-        {"esco_uri": "db-001", "label": "Database Knowledge", "mastery_score": 0.1, "confidence_score": 0.7}
+        {"taxonomy_id": "python-001", "taxonomy_source": "emsi", "label": "Python Programming", "mastery_score": 0.4, "confidence_score": 0.9},
+        {"taxonomy_id": "git-001", "taxonomy_source": "emsi", "label": "Git Version Control", "mastery_score": 0.9, "confidence_score": 0.95},
+        {"taxonomy_id": "sql-001", "taxonomy_source": "emsi", "label": "SQL Database", "mastery_score": 0.2, "confidence_score": 0.8},
+        {"taxonomy_id": "logic-001", "taxonomy_source": "emsi", "label": "Logic", "mastery_score": 0.95, "confidence_score": 0.99},
+        {"taxonomy_id": "db-001", "taxonomy_source": "emsi", "label": "Database Knowledge", "mastery_score": 0.1, "confidence_score": 0.7}
     ]
 
 def run_pipeline(resume_text: str, jd_text: str) -> PipelineState:
@@ -87,10 +87,10 @@ def run_pipeline(resume_text: str, jd_text: str) -> PipelineState:
         # Mastery of skills taught by this course
         # If multiple skills, we take average for priority purposes
         masteries = []
-        for esco in taught:
+        for tid in taught:
             m = 0.0
             for s in extracted_skills:
-                if s['esco_uri'] == esco:
+                if s['taxonomy_id'] == tid:
                     m = s['mastery_score']
                     break
             masteries.append(m)
@@ -120,11 +120,11 @@ def run_pipeline(resume_text: str, jd_text: str) -> PipelineState:
         
         course_masteries = []
         course_confidences = []
-        for esco in taught:
+        for tid in taught:
             m = 0.0
             c = 0.5 # Default low confidence if not found
             for s in extracted_skills:
-                if s['esco_uri'] == esco:
+                if s['taxonomy_id'] == tid:
                     m = s['mastery_score']
                     c = s['confidence_score']
                     break

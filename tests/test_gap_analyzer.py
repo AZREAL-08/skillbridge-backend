@@ -4,13 +4,24 @@ from app.state import SkillEntry
 
 def test_compute_skill_gap():
     extracted = [
-        {"esco_uri": "s1", "label": "L1", "mastery_score": 0.9, "confidence_score": 1.0},
-        {"esco_uri": "s2", "label": "L2", "mastery_score": 0.5, "confidence_score": 1.0},
+        {"taxonomy_id": "s1", "taxonomy_source": "emsi", "label": "L1", "mastery_score": 0.9, "confidence_score": 1.0},
+        {"taxonomy_id": "s2", "taxonomy_source": "emsi", "label": "L2", "mastery_score": 0.5, "confidence_score": 1.0},
     ]
     required = ["s1", "s2", "s3"]
     # s1 is mastered (0.9 >= 0.85), so gap should be s2, s3
     gap = compute_skill_gap(extracted, required)
     assert set(gap) == {"s2", "s3"}
+
+def test_compute_skill_gap_inferred_excluded():
+    """Inferred skills should NOT count as mastered for gap analysis."""
+    extracted = [
+        {"taxonomy_id": "s1", "taxonomy_source": "inferred", "label": "L1", "mastery_score": 0.9, "confidence_score": 1.0},
+        {"taxonomy_id": "s2", "taxonomy_source": "emsi", "label": "L2", "mastery_score": 0.5, "confidence_score": 1.0},
+    ]
+    required = ["s1", "s2", "s3"]
+    # s1 is inferred (not emsi), so it doesn't count as mastered
+    gap = compute_skill_gap(extracted, required)
+    assert set(gap) == {"s1", "s2", "s3"}
 
 def test_get_active_subgraph_with_prereq():
     G = nx.DiGraph()
@@ -21,8 +32,8 @@ def test_get_active_subgraph_with_prereq():
     
     skill_gap = ["s1"]
     extracted = [
-        {"esco_uri": "s1", "label": "L1", "mastery_score": 0.0, "confidence_score": 1.0},
-        {"esco_uri": "s2", "label": "L2", "mastery_score": 0.0, "confidence_score": 1.0},
+        {"taxonomy_id": "s1", "taxonomy_source": "emsi", "label": "L1", "mastery_score": 0.0, "confidence_score": 1.0},
+        {"taxonomy_id": "s2", "taxonomy_source": "emsi", "label": "L2", "mastery_score": 0.0, "confidence_score": 1.0},
     ]
     
     states = get_active_subgraph(G, skill_gap, extracted)
@@ -38,8 +49,8 @@ def test_get_active_subgraph_skipped():
     
     skill_gap = ["s1"]
     extracted = [
-        {"esco_uri": "s1", "label": "L1", "mastery_score": 0.0, "confidence_score": 1.0},
-        {"esco_uri": "s2", "label": "L2", "mastery_score": 0.9, "confidence_score": 1.0},
+        {"taxonomy_id": "s1", "taxonomy_source": "emsi", "label": "L1", "mastery_score": 0.0, "confidence_score": 1.0},
+        {"taxonomy_id": "s2", "taxonomy_source": "emsi", "label": "L2", "mastery_score": 0.9, "confidence_score": 1.0},
     ]
     
     states = get_active_subgraph(G, skill_gap, extracted)

@@ -1,6 +1,9 @@
 import time
 import json
 from app.extractor.extractor import extract_skills
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # The 5 personas to prove Cross-Domain Scalability
 TEST_RESUMES = {

@@ -87,7 +87,6 @@ dependencies = [
     "safetensors==0.7.0",
     "scikit-learn==1.8.0",
     "scipy==1.17.1",
-    "sentence-transformers==5.3.0",
     "setuptools==82.0.1",
     "shellingham==1.5.4",
     "six==1.17.0",

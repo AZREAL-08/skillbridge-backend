@@ -1,0 +1,16 @@
+Senior Frontend Engineer with 6 years of experience building scalable web applications.
+
+Technical Skills & Experience:
+- React.js: Led the frontend architecture for three enterprise SaaS products serving 50k+ users. Built custom component libraries, implemented complex state management with Redux and Context API, and optimized rendering performance.
+- JavaScript: Core skill across all roles. ES6+, TypeScript, async patterns, closures, prototypal inheritance. Mentored 4 junior developers on JavaScript best practices.
+- HTML & CSS: Expert-level semantic HTML5, responsive design with CSS Grid and Flexbox, WCAG accessibility compliance. Created design systems used across multiple product teams.
+- Git: Daily workflow tool. Branch strategies (GitFlow, trunk-based), code reviews, merge conflict resolution, CI/CD integration with GitHub.
+- REST APIs: Consumed dozens of RESTful endpoints. Built API integration layers in React. Familiar with OpenAPI specs and Postman testing.
+- Node.js: Used Express.js for small internal tools and prototyping. Set up basic server-side rendering for SEO. Not production-grade backend experience.
+- SQL: Written SELECT queries for debugging and data extraction. Basic JOINs and WHERE clauses. Never designed a schema or optimized queries.
+- Agile: Daily standups, sprint planning, retrospectives. Served as Scrum Master for a team of 8 for one year.
+
+Professional History:
+- Lead Frontend Engineer, TechCorp (2021-present): Architected React-based dashboard platform. Reduced page load times by 40%. Led team of 5 frontend developers.
+- Frontend Developer, StartupXYZ (2019-2021): Built customer-facing web app from scratch using React and TypeScript. Integrated 12 third-party APIs.
+- Junior Developer, WebAgency (2018-2019): Maintained WordPress sites, built landing pages with HTML/CSS/JavaScript.

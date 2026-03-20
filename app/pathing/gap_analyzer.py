@@ -1,6 +1,7 @@
 """
 Set intersection logic for skill gap analysis.
-Skill Gap URIs = Target JD URIs − User Mastered URIs
+Skill Gap IDs = Target JD IDs − User Mastered IDs
+Only EMSI-mapped skills participate in set intersection.
 Recursive subgraph pull-ins for prerequisites.
 """
 
@@ -14,12 +15,16 @@ MASTERY_THRESHOLD = 0.85
 def compute_skill_gap(extracted_skills: List[SkillEntry], required_skills: List[str]) -> List[str]:
     """
     Computes skill gap: required_skills - mastered_skills.
+    Only EMSI-mapped skills (taxonomy_source == "emsi") participate in the
+    set intersection. Inferred skills do not drive gap analysis.
+
     :param extracted_skills: Skills from user's resume with mastery scores.
-    :param required_skills: Skills required by the JD (ESCO URIs).
-    :return: List of ESCO URIs in the gap.
+    :param required_skills: Skills required by the JD (EMSI taxonomy IDs).
+    :return: List of EMSI taxonomy IDs in the gap.
     """
     mastered_skills = {
-        s['esco_uri'] for s in extracted_skills if s['mastery_score'] >= MASTERY_THRESHOLD
+        s['taxonomy_id'] for s in extracted_skills
+        if s.get('taxonomy_source') == 'emsi' and s['mastery_score'] >= MASTERY_THRESHOLD
     }
     gap = [s for s in required_skills if s not in mastered_skills]
     return gap
@@ -32,13 +37,14 @@ def get_active_subgraph(
     """
     Identifies assigned, prerequisite, and skipped courses.
     :param G: The full catalog DAG.
-    :param skill_gap: List of ESCO URIs in the user's gap.
+    :param skill_gap: List of EMSI taxonomy IDs in the user's gap.
     :param extracted_skills: Full list of user's extracted skills.
     :return: Dictionary mapping course_id to node_state ("assigned", "prerequisite", "skipped").
     """
     gap_set = set(skill_gap)
     mastered_skills = {
-        s['esco_uri'] for s in extracted_skills if s['mastery_score'] >= MASTERY_THRESHOLD
+        s['taxonomy_id'] for s in extracted_skills
+        if s.get('taxonomy_source') == 'emsi' and s['mastery_score'] >= MASTERY_THRESHOLD
     }
     
     # Direct candidates: courses that teach at least one skill in the gap

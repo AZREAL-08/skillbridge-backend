@@ -1,32 +1,13 @@
 import logging
 from typing import Dict, List, Set
 
-from app.extractor.schemas      import SkillEntry
+from app.extractor.schemas       import SkillEntry
 from app.extractor.skillner_model import extract_explicit_skills
 from app.extractor.jobbert_model  import extract_implicit_skills
-from app.extractor.skillsim_model import map_to_esco
 from app.extractor.groq_mastery   import estimate_mastery
 
 logger = logging.getLogger(__name__)
 
-# ── EXPANDED Dummy ESCO catalog (Fixes Bug 2) ──────────────────────────────────
-_DUMMY_ESCO_CATALOG: Dict[str, dict] = {
-    "http://data.europa.eu/esco/skill/ks-python"   : {"label": "Python (programming language)"},
-    "http://data.europa.eu/esco/skill/ks-react"    : {"label": "React (JavaScript library)"},
-    "http://data.europa.eu/esco/skill/ks-ml"       : {"label": "machine learning"},
-    "http://data.europa.eu/esco/skill/ks-docker"   : {"label": "Docker"},
-    "http://data.europa.eu/esco/skill/ks-restapi"  : {"label": "REST API development"},
-    "http://data.europa.eu/esco/skill/ks-aws"      : {"label": "Amazon Web Services (AWS)"},
-    "http://data.europa.eu/esco/skill/ks-sql"      : {"label": "SQL"},
-    "http://data.europa.eu/esco/skill/ks-agile"    : {"label": "Agile software development"},
-    # Added for Personas B, C, D, E
-    "http://data.europa.eu/esco/skill/ks-scm"      : {"label": "supply chain management"},
-    "http://data.europa.eu/esco/skill/ks-forklift" : {"label": "operate forklift"},
-    "http://data.europa.eu/esco/skill/ks-seo"      : {"label": "search engine optimisation"},
-    "http://data.europa.eu/esco/skill/ks-pandas"   : {"label": "pandas (Python)"},
-    "http://data.europa.eu/esco/skill/ks-cust"     : {"label": "customer service"},
-    "http://data.europa.eu/esco/skill/ks-payroll"  : {"label": "manage payroll"},
-}
 
 def extract_skills(raw_text: str) -> List[SkillEntry]:
     if not raw_text or not raw_text.strip():
@@ -35,15 +16,15 @@ def extract_skills(raw_text: str) -> List[SkillEntry]:
 
     logger.info("[Orchestrator] Starting skill extraction pipeline.")
 
-    # ── Stage 1: Explicit extraction (SkillNER) ──────────────────────────────
-    explicit_skills: List[str] = []
+    # ── Stage 1: Explicit extraction (SkillNER → EMSI IDs) ───────────────────
+    explicit_skills: List[dict] = []
     try:
         explicit_skills = extract_explicit_skills(raw_text)
     except Exception as exc:
         logger.error("[Orchestrator] Stage 1 failed: %s", exc)
 
-    # ── Stage 2: Implicit extraction (JobBERT) ───────────────────────────────
-    implicit_skills: List[str] = []
+    # ── Stage 2: Implicit extraction (JobBERT → EMSI map / inferred) ─────────
+    implicit_skills: List[dict] = []
     try:
         implicit_skills = extract_implicit_skills(raw_text)
     except Exception as exc:
@@ -55,58 +36,101 @@ def extract_skills(raw_text: str) -> List[SkillEntry]:
     if not merged:
         return []
 
-    # ── Stage 4: Semantic ESCO mapping (SkillSim) ────────────────────────────
-    mapped_skills: List[dict] = []
-    try:
-        mapped_skills = map_to_esco(merged, _DUMMY_ESCO_CATALOG)
-    except Exception as exc:
-        logger.error("[Orchestrator] Stage 4 failed: %s", exc)
-
-    if not mapped_skills:
-        return []
-        
-    # [BUG 3 FIX]: Deduplicate by ESCO URI so "AWS" and "Amazon Web Services" don't double up
-    unique_mapped = {}
-    for skill in mapped_skills:
-        uri = skill["esco_uri"]
-        if uri not in unique_mapped:
-            unique_mapped[uri] = skill
-    mapped_skills = list(unique_mapped.values())
-
-    # ── Stage 5: Mastery scoring (Groq / Llama-3) ────────────────────────────
+    # ── Stage 4: Mastery scoring (Groq / Llama-3) ────────────────────────────
     scored_skills: List[dict] = []
     try:
-        scored_skills = estimate_mastery(raw_text, mapped_skills)
+        scored_skills = estimate_mastery(raw_text, merged)
     except Exception as exc:
-        logger.error("[Orchestrator] Stage 5 failed: %s", exc)
-        scored_skills = [{"esco_uri": s["esco_uri"], "label": s["label"], "mastery_score": 0.3} for s in mapped_skills]
+        logger.error("[Orchestrator] Stage 4 failed: %s", exc)
+        scored_skills = [
+            {
+                "taxonomy_id": s["taxonomy_id"],
+                "taxonomy_source": s["taxonomy_source"],
+                "label": s["label"],
+                "mastery_score": 0.3,
+            }
+            for s in merged
+        ]
 
-    # ── Stage 6: Cast to strict SkillEntry TypedDict ─────────────────────────
+    # ── Stage 5: Cast to strict SkillEntry TypedDict + assign confidence ─────
     return _cast_to_skill_entries(scored_skills)
 
-def _merge_and_deduplicate(explicit: List[str], implicit: List[str]) -> List[str]:
+
+def _merge_and_deduplicate(
+    explicit: List[dict], implicit: List[dict]
+) -> List[dict]:
+    """
+    Merge SkillNER (explicit) and JobBERT (implicit) results into a single
+    deduplicated list keyed by taxonomy_id.
+
+    Explicit skills from SkillNER have higher confidence weight.
+    Implicit skills from JobBERT are included with lower confidence.
+
+    Returns list of dicts with:
+        {"taxonomy_id": str, "taxonomy_source": str, "label": str, "confidence_score": float}
+    """
     seen: Set[str] = set()
-    merged: List[str] = []
-    for skill in explicit + implicit:
-        normalized = skill.strip().lower()
-        if normalized and normalized not in seen:
-            seen.add(normalized)
-            merged.append(normalized)
+    merged: List[dict] = []
+
+    # SkillNER results — all have EMSI IDs, confidence = 0.7
+    for skill in explicit:
+        skill_id = skill.get("skill_id", "").strip()
+        if skill_id and skill_id not in seen:
+            seen.add(skill_id)
+            merged.append({
+                "taxonomy_id": skill_id,
+                "taxonomy_source": "emsi",
+                "label": skill.get("label", "").strip(),
+                "confidence_score": 0.7,
+            })
+
+    # JobBERT results — may be EMSI-mapped or inferred
+    for skill in implicit:
+        skill_id = skill.get("skill_id", "").strip()
+        source   = skill.get("source", "inferred")
+
+        if skill_id and skill_id not in seen:
+            seen.add(skill_id)
+
+            if source == "emsi":
+                # Hard skill mapped to EMSI via SkillNER — lower weight since JobBERT-sourced
+                confidence = 0.3
+            else:
+                # Soft/contextual skill — lowest confidence tier
+                confidence = 0.2
+
+            merged.append({
+                "taxonomy_id": skill_id,
+                "taxonomy_source": source,
+                "label": skill.get("label", "").strip(),
+                "confidence_score": confidence,
+            })
+
     return merged
+
 
 def _cast_to_skill_entries(scored: List[dict]) -> List[SkillEntry]:
     entries: List[SkillEntry] = []
     for item in scored:
         try:
-            uri   = str(item.get("esco_uri", "")).strip()
-            label = str(item.get("label", "")).strip()
-            score = float(item.get("mastery_score", 0.3))
-            score = max(0.0, min(1.0, score))
+            tax_id  = str(item.get("taxonomy_id", "")).strip()
+            source  = str(item.get("taxonomy_source", "emsi")).strip()
+            label   = str(item.get("label", "")).strip()
+            mastery = float(item.get("mastery_score", 0.3))
+            mastery = max(0.0, min(1.0, mastery))
+            conf    = float(item.get("confidence_score", 0.5))
+            conf    = max(0.0, min(1.0, conf))
 
-            if not uri or not label:
+            if not tax_id or not label:
                 continue
 
-            entries.append({"esco_uri": uri, "label": label, "mastery_score": score})
+            entries.append({
+                "taxonomy_id": tax_id,
+                "taxonomy_source": source,
+                "label": label,
+                "mastery_score": mastery,
+                "confidence_score": conf,
+            })
         except (TypeError, ValueError):
             continue
     return entries

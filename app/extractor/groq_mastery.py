@@ -18,7 +18,6 @@ def _get_groq_client() -> Groq:
         _GROQ_CLIENT = Groq(api_key=api_key)
     return _GROQ_CLIENT
 
-# [BUG 4 FIX]: Prompt now strictly demands a JSON Object wrapper {"skills": [...]}
 _SYSTEM_PROMPT = """
 You are a strict talent assessment engine. Your sole task is to analyze a candidate's resume text and assign a mastery_score for each provided skill based on Benjamin Bloom's framework:
   0.0 – 0.2  : Awareness     — mentioned in passing, no demonstrated use
@@ -35,7 +34,7 @@ STRICT RULES:
 OUTPUT FORMAT:
 {
   "skills": [
-    {"esco_uri": "<uri>", "label": "<label>", "mastery_score": <float>}
+    {"taxonomy_id": "<id>", "label": "<label>", "mastery_score": <float>}
   ]
 }
 """.strip()
@@ -46,7 +45,7 @@ def estimate_mastery(resume_text: str, mapped_skills: List[dict]) -> List[dict]:
     if not resume_text or not resume_text.strip():
         return _apply_fallback(mapped_skills)
 
-    skill_payload = [{"esco_uri": s["esco_uri"], "label": s["label"]} for s in mapped_skills]
+    skill_payload = [{"taxonomy_id": s["taxonomy_id"], "label": s["label"]} for s in mapped_skills]
     user_message = f"RESUME TEXT:\n{resume_text.strip()}\n\nSKILLS TO SCORE:\n{json.dumps(skill_payload, ensure_ascii=False, indent=2)}"
 
     try:
@@ -82,26 +81,55 @@ def _parse_and_validate(raw_content: str, mapped_skills: List[dict]) -> List[dic
     for entry in skills_array:
         if not isinstance(entry, dict):
             continue
-        uri   = entry.get("esco_uri", "")
-        label = entry.get("label", "")
+        tax_id = entry.get("taxonomy_id", "")
+        label  = entry.get("label", "")
         try:
             score = max(0.0, min(1.0, float(entry.get("mastery_score", 0.3))))
         except (TypeError, ValueError):
             score = 0.3
         
-        if uri and label:
-            validated.append({"esco_uri": uri, "label": label, "mastery_score": score})
+        if tax_id and label:
+            # Carry forward taxonomy_source and confidence_score from original mapped_skills
+            source = "emsi"
+            conf   = 0.5
+            for s in mapped_skills:
+                if s.get("taxonomy_id") == tax_id:
+                    source = s.get("taxonomy_source", "emsi")
+                    conf   = s.get("confidence_score", 0.5)
+                    break
+            validated.append({
+                "taxonomy_id": tax_id,
+                "taxonomy_source": source,
+                "label": label,
+                "mastery_score": score,
+                "confidence_score": conf,
+            })
 
     if len(validated) < len(mapped_skills):
         validated = _fill_missing(validated, mapped_skills)
     return validated
 
 def _apply_fallback(mapped_skills: List[dict]) -> List[dict]:
-    return [{"esco_uri": s.get("esco_uri", ""), "label": s.get("label", ""), "mastery_score": 0.3} for s in mapped_skills]
+    return [
+        {
+            "taxonomy_id": s.get("taxonomy_id", ""),
+            "taxonomy_source": s.get("taxonomy_source", "emsi"),
+            "label": s.get("label", ""),
+            "mastery_score": 0.3,
+            "confidence_score": s.get("confidence_score", 0.5),
+        }
+        for s in mapped_skills
+    ]
 
 def _fill_missing(validated: List[dict], original: List[dict]) -> List[dict]:
-    returned_uris = {e["esco_uri"] for e in validated}
+    returned_ids = {e["taxonomy_id"] for e in validated}
     for s in original:
-        if s.get("esco_uri") not in returned_uris:
-            validated.append({"esco_uri": s.get("esco_uri", ""), "label": s.get("label", ""), "mastery_score": 0.3})
+        if s.get("taxonomy_id") not in returned_ids:
+            validated.append({
+                "taxonomy_id": s.get("taxonomy_id", ""),
+                "taxonomy_source": s.get("taxonomy_source", "emsi"),
+                "label": s.get("label", ""),
+                "mastery_score": 0.3,
+                "confidence_score": s.get("confidence_score", 0.5),
+            })
     return validated

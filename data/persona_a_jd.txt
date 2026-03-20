@@ -1,0 +1,20 @@
+Full-Stack Software Engineer
+
+We are looking for an experienced Full-Stack Engineer to design and build production-grade backend services and APIs.
+
+Required Skills:
+- Node.js: Build and maintain production backend services using Node.js and Express.js
+- PostgreSQL: Design database schemas, write complex queries, and optimize performance
+- Docker: Containerize applications for consistent development and deployment environments
+- CI/CD: Set up and maintain continuous integration and delivery pipelines with GitHub Actions
+- System Design: Design scalable API architectures and microservices
+- REST APIs: Design and implement RESTful API endpoints following best practices
+- Git: Version control, branching strategies, and code review workflows
+- JavaScript: Strong foundation in modern JavaScript (ES6+, async/await, TypeScript)
+- Redis: Implement caching strategies for high-performance applications
+- Cloud Computing: Deploy and manage applications on cloud platforms
+
+Nice to Have:
+- React.js experience for full-stack capabilities
+- Microservices architecture experience
+- Agile development methodology experience

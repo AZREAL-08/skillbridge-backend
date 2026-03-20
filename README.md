@@ -57,22 +57,22 @@ Ensure you run tests through `uv run` to use the managed environment:
 
 ### Run All Unit Tests
 ```bash
-uv run pytest tests/
+uv run python -m pytest tests/
 ```
 
 ### Run NLP Pipeline Integration Test (Extractor)
 ```bash
-uv run python experiments/test_nlp_pipeline.py
+uv run python -m experiments.test_nlp_pipeline
 ```
 
 ### Run Pathing Engine Experiment
 ```bash
-uv run python experiments/test_kahn.py
+uv run python -m experiments.test_kahn
 ```
 
 ### Run Full End-to-End Pipeline Verification
 ```bash
-uv run python experiments/test_full_pipeline.py
+uv run python -m experiments.test_full_pipeline
 ```
 
 ## Maintenance: Keeping requirements.txt updated
