@@ -12,8 +12,6 @@ build/
 .vscode/
 .pytest_cache/
 
-# User specifically requested to ignore PDFs
 *.pdf
 
-# System files
 .DS_Store
