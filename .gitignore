@@ -13,5 +13,7 @@ build/
 .pytest_cache/
 
 *.pdf
-
+*.csv
+dataset/
+ESCO.zip
 .DS_Store
