@@ -1,11 +1,19 @@
 .env
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+*$py.class
 .venv/
 venv/
+env/
 *.egg-info/
 dist/
 build/
 .idea/
 .vscode/
+.pytest_cache/
+
+# User specifically requested to ignore PDFs
+*.pdf
+
+# System files
+.DS_Store
