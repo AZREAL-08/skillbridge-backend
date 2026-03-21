@@ -3,13 +3,15 @@ FastAPI entry point — SkillBridge v2.0
 Implements both HR Admin and Candidate flows.
 """
 
+import io
 import uuid
 import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional, Literal
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import pdfplumber
 
 # --- Shared State Schemas ---
 from app.state import SkillEntry, StoredJD, PipelineState, CurrentState, TargetState, Question
@@ -55,9 +57,6 @@ class JDConfirmRequest(BaseModel):
     required_skills: List[SkillEntry]
     department: str = ""
 
-class ResumeUploadRequest(BaseModel):
-    raw_text: str
-
 class ResumeConfirmRequest(BaseModel):
     raw_text: str
     confirmed_skills: List[SkillEntry]
@@ -70,6 +69,61 @@ class PathwayGenerateRequest(BaseModel):
     current_state_id: str
     jd_id: str
     preferences: Dict[str, Any]
+
+# ===========================================================================
+# PDF Text Extraction
+# ===========================================================================
+
+def extract_text_from_pdf(pdf_bytes: bytes) -> str:
+    """
+    Extract plain text from a resume PDF using pdfplumber.
+
+    Strategy:
+      - Iterates every page and collects text from page.extract_text().
+      - Pages are separated by a double newline so section boundaries
+        (e.g. end of Experience, start of Education) are preserved for
+        the downstream SkillNER / JobBERT models.
+      - If pdfplumber returns nothing for a page (scanned/image-only PDF),
+        that page is silently skipped rather than crashing. The caller
+        receives whatever text was extractable.
+
+    Args:
+        pdf_bytes: Raw bytes of the uploaded PDF file.
+
+    Returns:
+        Concatenated plain-text string. Raises HTTPException 400 if the
+        PDF is completely empty (no extractable text on any page).
+    """
+    pages_text: List[str] = []
+
+    with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+        for page_num, page in enumerate(pdf.pages, start=1):
+            page_text = page.extract_text()
+            if page_text and page_text.strip():
+                pages_text.append(page_text.strip())
+            else:
+                logger.debug(
+                    "[PDFExtract] Page %d returned no text (image-only or blank).",
+                    page_num,
+                )
+
+    if not pages_text:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "No extractable text found in the uploaded PDF. "
+                "The file may be a scanned image. "
+                "Please upload a text-based PDF or paste your resume as plain text."
+            ),
+        )
+
+    full_text = "\n\n".join(pages_text)
+    logger.info(
+        "[PDFExtract] Extracted %d chars across %d pages.",
+        len(full_text), len(pages_text),
+    )
+    return full_text
+
 
 # ===========================================================================
 # App Setup
@@ -146,11 +200,76 @@ async def get_jd(jd_id: str):
 # ===========================================================================
 
 @app.post("/api/resume/upload")
-async def upload_resume(request: ResumeUploadRequest):
-    """Runs full Track 2 pipeline (including Groq mastery scoring)."""
+async def upload_resume(
+    file: Optional[UploadFile] = File(default=None),
+    raw_text: Optional[str]    = Form(default=None),
+):
+    """
+    Unified resume upload endpoint — accepts either:
+      - A PDF file via multipart/form-data   (field name: "file")
+      - Raw plain text via multipart/form-data (field name: "raw_text")
+
+    Both paths run the full Track 2 pipeline:
+    SkillNER → JobBERT → LLM filter → Groq mastery scoring.
+
+    Returns {"extracted_skills": [...], "raw_text": "..."} in both cases.
+    raw_text is always returned so the frontend can pass it to
+    /api/resume/confirm without re-uploading.
+
+    Frontend usage — PDF:
+        const form = new FormData();
+        form.append("file", pdfFile);
+        fetch("/api/resume/upload", { method: "POST", body: form });
+
+    Frontend usage — plain text:
+        const form = new FormData();
+        form.append("raw_text", pastedText);
+        fetch("/api/resume/upload", { method: "POST", body: form });
+    """
+    resume_text: str = ""
+
+    if file is not None and file.filename:
+        # ── PDF path ─────────────────────────────────────────────────────────
+        content_type = file.content_type or ""
+        if content_type not in ("application/pdf", "application/octet-stream", ""):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported file type '{content_type}'. Please upload a PDF.",
+            )
+
+        pdf_bytes = await file.read()
+
+        if len(pdf_bytes) == 0:
+            raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+        if not pdf_bytes.startswith(b"%PDF-"):
+            raise HTTPException(
+                status_code=400,
+                detail="Uploaded file does not appear to be a valid PDF.",
+            )
+
+        logger.info(
+            "[ResumeUpload] Received PDF '%s' (%d bytes).",
+            file.filename, len(pdf_bytes),
+        )
+        resume_text = extract_text_from_pdf(pdf_bytes)
+
+    elif raw_text and raw_text.strip():
+        # ── Plain text path ───────────────────────────────────────────────────
+        resume_text = raw_text.strip()
+        logger.info(
+            "[ResumeUpload] Received raw text (%d chars).", len(resume_text)
+        )
+
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Provide either a PDF file (field: 'file') or plain text (field: 'raw_text').",
+        )
+
     catalog = load_catalog()
-    extracted_skills = extract_skills(request.raw_text, catalog)
-    return {"extracted_skills": extracted_skills}
+    extracted_skills = extract_skills(resume_text, catalog)
+    return {"extracted_skills": extracted_skills, "raw_text": resume_text}
 
 @app.post("/api/resume/confirm")
 async def confirm_resume(request: ResumeConfirmRequest):
