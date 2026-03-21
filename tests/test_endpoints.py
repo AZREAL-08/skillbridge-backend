@@ -1,5 +1,4 @@
 import pytest
-import io
 from httpx import AsyncClient, ASGITransport
 from app.main import app, DB_JDS, DB_SESSIONS
 
@@ -7,16 +6,21 @@ from app.main import app, DB_JDS, DB_SESSIONS
 async def test_full_pathway_flow():
     # 1. Setup Mock Data in "Database"
     jd_id = "jd_test_123"
+    
+    # Real EMSI IDs from catalog.json for 'technical' domain
+    js_id = "KS1200771D9CR9LB4MWW" # JavaScript
+    linux_id = "KS122VT6S2JJ5C5D80NF" # Linux
+    
     DB_JDS[jd_id] = {
         "jd_id": jd_id,
         "role_title": "Software Engineer",
         "company": "TestCorp",
         "department": "Engineering",
         "domain": "technical",
-        "raw_text": "Looking for a Python developer with SQL knowledge.",
+        "raw_text": "Looking for a JS developer with Linux knowledge.",
         "required_skills": [
-            {"taxonomy_id": "python-001", "label": "Python", "mastery_score": 0.0, "confidence_score": 1.0, "taxonomy_source": "emsi"},
-            {"taxonomy_id": "sql-001", "label": "SQL", "mastery_score": 0.0, "confidence_score": 1.0, "taxonomy_source": "emsi"}
+            {"taxonomy_id": js_id, "label": "JavaScript", "mastery_score": 0.0, "confidence_score": 1.0, "taxonomy_source": "emsi"},
+            {"taxonomy_id": linux_id, "label": "Linux", "mastery_score": 0.0, "confidence_score": 1.0, "taxonomy_source": "emsi"}
         ],
         "created_at": "2026-03-21T00:00:00",
         "is_deleted": False
@@ -24,10 +28,10 @@ async def test_full_pathway_flow():
 
     session_id = "sess_test_456"
     DB_SESSIONS[session_id] = {
-        "raw_resume_text": "I am a developer with Python skills but no SQL.",
+        "raw_resume_text": "I am a developer with JS skills but no Linux.",
         "extracted_skills": [
-            {"taxonomy_id": "python-001", "label": "Python", "mastery_score": 0.9, "confidence_score": 0.9, "taxonomy_source": "emsi"},
-            {"taxonomy_id": "sql-001", "label": "SQL", "mastery_score": 0.1, "confidence_score": 0.9, "taxonomy_source": "emsi"}
+            {"taxonomy_id": js_id, "label": "JavaScript", "mastery_score": 0.9, "confidence_score": 0.9, "taxonomy_source": "emsi"},
+            {"taxonomy_id": linux_id, "label": "Linux", "mastery_score": 0.1, "confidence_score": 0.9, "taxonomy_source": "emsi"}
         ]
     }
 
@@ -73,9 +77,10 @@ async def test_full_pathway_flow():
         assert "total_hours" in metrics
         assert "saved_hours" in metrics
         
-        # Verify specific logic
+        # Verify specific logic: JS (0.9) should be skipped, Linux (0.1) should be assigned
+        # Linux course is TECH-104
         pathway = pipeline_state["final_pathway"]
-        assert any(c["course_id"] == "C-SQL-101" and c["node_state"] != "skipped" for c in pathway)
+        assert any(c["course_id"] == "TECH-104" and c["node_state"] != "skipped" for c in pathway)
 
 @pytest.mark.anyio
 async def test_jd_management():
