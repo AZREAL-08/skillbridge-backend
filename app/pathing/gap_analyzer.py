@@ -88,6 +88,12 @@ NOISE_LABELS: Set[str] = {
     # Generic business terms
     "budget", "revenue", "marketing", "sales", "customer service",
     "analysis", "team leader", "manager", "supervisor",
+    # Stricter noise filtering additions
+    "problem solving", "communication", "teamwork", "leadership",
+    "time management", "organization", "detail oriented",
+    "interpersonal skills", "flexibility", "adaptability",
+    "strategic thinking", "project management", "critical thinking",
+    "decision making", "presentation skills", "public speaking",
 }
 
 
@@ -131,20 +137,43 @@ def filter_noise_skill_entries(skills: List[dict]) -> List[dict]:
     return filtered
 
 
-def compute_skill_gap(extracted_skills: List[SkillEntry], required_skills: List[str]) -> List[str]:
+def compute_skill_gap(
+    extracted_skills: List[SkillEntry], 
+    required_skills: List[str],
+    catalog: List[Dict[str, Any]] = None,
+    domain_filter: str = None
+) -> List[str]:
     """
     Computes skill gap: required_skills - mastered_skills.
     Only EMSI-mapped skills (taxonomy_source == "emsi") participate in the
     set intersection. Inferred skills do not drive gap analysis.
 
     Noise skills are filtered from required_skills before computing the gap.
+    If domain_filter is provided, only skills taught by courses in that domain
+    are considered in the gap.
 
     :param extracted_skills: Skills from user's resume with mastery scores.
     :param required_skills: Skills required by the JD (EMSI taxonomy IDs).
+    :param catalog: Full course catalog (needed for domain filtering).
+    :param domain_filter: Optional domain string (e.g. "technical", "operations").
     :return: List of EMSI taxonomy IDs in the gap.
     """
     # Filter noise from JD required skills
     clean_required = filter_noise_skills(required_skills)
+
+    # Apply domain filter if provided
+    if domain_filter and catalog:
+        domain_skills = set()
+        for course in catalog:
+            if course.get('domain') == domain_filter:
+                domain_skills.update(course.get('skills_taught', []))
+        
+        filtered_required = [s for s in clean_required if s in domain_skills]
+        logger.info(
+            "[GapAnalyzer] Domain filter '%s' kept %d of %d required skills.",
+            domain_filter, len(filtered_required), len(clean_required)
+        )
+        clean_required = filtered_required
 
     mastered_skills = {
         s['taxonomy_id'] for s in extracted_skills
@@ -156,13 +185,15 @@ def compute_skill_gap(extracted_skills: List[SkillEntry], required_skills: List[
 def get_active_subgraph(
     G: nx.DiGraph, 
     skill_gap: List[str], 
-    extracted_skills: List[SkillEntry]
+    extracted_skills: List[SkillEntry],
+    domain_filter: str = None
 ) -> Dict[str, str]:
     """
     Identifies assigned, prerequisite, and skipped courses.
     :param G: The full catalog DAG.
     :param skill_gap: List of EMSI taxonomy IDs in the user's gap.
     :param extracted_skills: Full list of user's extracted skills.
+    :param domain_filter: Optional domain string (e.g. "technical", "operations").
     :return: Dictionary mapping course_id to node_state ("assigned", "prerequisite", "skipped").
     """
     gap_set = set(skill_gap)
@@ -174,6 +205,10 @@ def get_active_subgraph(
     # Direct candidates: courses that teach at least one skill in the gap
     assigned_ids = set()
     for cid, data in G.nodes(data=True):
+        # If domain filter is active, only assign courses in that domain
+        if domain_filter and data.get('domain') != domain_filter:
+            continue
+            
         taught = set(data.get('skills_taught', []))
         if taught.intersection(gap_set):
             assigned_ids.add(cid)

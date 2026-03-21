@@ -7,9 +7,59 @@ import networkx as nx
 from app.state import PipelineState, CurrentState, TargetState, SkillEntry, PathwayCourse, Metrics
 from app.pathing.dag_builder import build_dag
 from app.catalog.loader import load_catalog
-from app.pathing.gap_analyzer import compute_skill_gap, get_active_subgraph
+from app.pathing.gap_analyzer import compute_skill_gap, get_active_subgraph, MASTERY_THRESHOLD
 from app.pathing.kahn import kahn_priority_sort
 from app.pathing.tracer import generate_reasoning_trace
+
+def add_skipped_nodes(
+    final_pathway: List[PathwayCourse], 
+    current_skills: List[SkillEntry], 
+    required_skills: List[str], 
+    catalog: List[Dict[str, Any]]
+) -> List[PathwayCourse]:
+    """
+    Identifies courses that were not in the active subgraph but are mastered
+    by the user AND relevant to the JD. These should be shown as 'skipped'.
+    """
+    mastered = {s['taxonomy_id'] for s in current_skills if s['mastery_score'] >= MASTERY_THRESHOLD}
+    target = set(required_skills)
+    assigned_ids = {p['course_id'] for p in final_pathway}
+    
+    new_pathway = list(final_pathway)
+    
+    for course in catalog:
+        cid = course['course_id']
+        if cid in assigned_ids:
+            continue
+            
+        # Course teaches something the JD needs AND user has mastered
+        taught = set(course.get('skills_taught', []))
+        if taught.intersection(mastered) and taught.intersection(target):
+            # Calculate average mastery and confidence for this course
+            course_masteries = []
+            course_confidences = []
+            for tid in taught:
+                m = 0.0
+                c = 0.7
+                for s in current_skills:
+                    if s['taxonomy_id'] == tid:
+                        m = s['mastery_score']
+                        c = s['confidence_score']
+                        break
+                course_masteries.append(m)
+                course_confidences.append(c)
+                
+            avg_mastery = sum(course_masteries) / len(course_masteries) if course_masteries else 0.0
+            avg_confidence = sum(course_confidences) / len(course_confidences) if course_confidences else 0.7
+            
+            new_pathway.append({
+                "course_id": cid,
+                "node_state": "skipped",
+                "mastery_score": avg_mastery,
+                "confidence_score": avg_confidence
+            })
+            
+    return new_pathway
 
 def mock_extract_skills(resume_text: str) -> List[SkillEntry]:
     """
@@ -24,7 +74,7 @@ def mock_extract_skills(resume_text: str) -> List[SkillEntry]:
         {"taxonomy_id": "db-001", "taxonomy_source": "emsi", "label": "Database Knowledge", "mastery_score": 0.1, "confidence_score": 0.7}
     ]
 
-def run_pipeline(resume_text: str, jd_text: str) -> PipelineState:
+def run_pipeline(resume_text: str, jd_text: str, domain_filter: str = None) -> PipelineState:
     """
     Full pipeline: extract_skills → compute_gap → run_kahn → generate_traces
     """
@@ -69,10 +119,10 @@ def run_pipeline(resume_text: str, jd_text: str) -> PipelineState:
     required_skills = ["python-001", "sql-001", "git-001"]
     
     # 4. Compute gap
-    skill_gap = compute_skill_gap(extracted_skills, required_skills)
+    skill_gap = compute_skill_gap(extracted_skills, required_skills, catalog, domain_filter)
     
     # 5. Identify active subgraph
-    node_states = get_active_subgraph(G, skill_gap, extracted_skills)
+    node_states = get_active_subgraph(G, skill_gap, extracted_skills, domain_filter)
     active_node_ids = list(node_states.keys())
     
     # 6. Precompute metadata for Kahn sort
@@ -156,6 +206,9 @@ def run_pipeline(resume_text: str, jd_text: str) -> PipelineState:
             )
             reasoning_traces.append(trace)
             
+    # 8.5 Add Skipped Nodes that weren't in the active subgraph
+    final_pathway = add_skipped_nodes(final_pathway, extracted_skills, required_skills, catalog)
+    
     # 9. Compute Metrics
     baseline_courses = max(len(catalog), 30) # PDF says "Always 30 (len of catalog)"
     reduction_pct = 0.0

@@ -59,7 +59,10 @@ BLOOM_DECAY: Dict[int, float] = {
 
 MENTION_BOOST: float = 0.15      # Boost for skills explicitly mentioned in resume
 LEADERSHIP_BOOST: float = 0.10   # Boost for skills with leadership/scale signals
+CERTIFICATION_BOOST: float = 0.20 # Boost for certified skills
 NEGATION_CAP: float = 0.45       # Hard cap when negation context detected
+CERTIFICATION_FLOOR: float = 0.90 # Minimum mastery for certified skills
+SENIORITY_FLOOR: float = 0.85     # Minimum mastery for 5+ years / daily core skills
 
 # ── Negation Detection ────────────────────────────────────────────────────────
 # Phrases that indicate the candidate does NOT have deep expertise in a skill.
@@ -70,7 +73,8 @@ NEGATION_PHRASES = [
     "not production",
     "no production",
     "not production-grade",
-    "no production",
+    "not production grade",
+    "not for production",
     
     # Generic non-proficiency
     "not proficient",
@@ -80,6 +84,7 @@ NEGATION_PHRASES = [
     "unfamiliar with",
     "not familiar",
     "no familiarity",
+    "no experience with",
     
     # Time/scope bounded
     "never designed",
@@ -89,12 +94,16 @@ NEGATION_PHRASES = [
     "never touched",
     "never developed",
     "never implemented",
+    "never optimized",
     
     # Hands-on/professional
     "no hands-on",
     "no professional",
     "no work experience",
     "only theoretical",
+    "read-only",
+    "read only",
+    "no schema design",
     
     # Level/capability
     "basic only",
@@ -103,6 +112,8 @@ NEGATION_PHRASES = [
     "minimal experience",
     "beginner level",
     "junior level only",
+    "basic joins",
+    "basic select",
     
     # Not expert/advanced
     "not comfortable",
@@ -116,12 +127,14 @@ NEGATION_PHRASES = [
     # Tool-specific non-proficiency
     "no pivot tables",
     "no formal data analysis",
+    "no power bi",
     
     # Scope/tool constraints
     "prototyping only",
     "small internal tools",
     "familiar with but",
     "data entry level only",
+    "scripting only",
     
     # Weak signals
     "only familiar",
@@ -191,6 +204,29 @@ LEADERSHIP_PATTERNS = [
     r"responsible\s+for\s+(?:building|designing|architecting|leading)",
 ]
 
+# ── Certification Detection ───────────────────────────────────────────────────
+CERTIFICATION_PATTERNS = [
+    r"certified",
+    r"certification",
+    r"certificate",
+    r"osha\s+30-hour",
+    r"forklift\s+certified",
+]
+
+# ── Seniority/Years-in-Role Detection ─────────────────────────────────────────
+SENIORITY_PATTERNS = [
+    r"5\+\s+years",
+    r"8\+\s+years",
+    r"10\+\s+years",
+    r"decade\s+of",
+    r"over\s+5\s+years",
+    r"over\s+8\s+years",
+    r"daily\s+driver",
+    r"used\s+daily",
+    r"years\s+of\s+experience",
+    r"throughout\s+tenure",
+]
+
 
 _PROFILE_CLASSIFY_PROMPT = """
 You are a resume classification engine. Your sole task is to classify the candidate into exactly one category based on their overall profile.
@@ -224,7 +260,7 @@ def classify_profile(resume_text: str) -> Tuple[str, float, str]:
         (profile_type, base_score, reasoning)
     """
     if not resume_text or not resume_text.strip():
-        logger.warning("[GroqMastery] Empty resume text, defaulting to fresher_academic.")
+        logger.info("[GroqMastery] Empty resume text, defaulting to fresher_academic.")
         return "fresher_academic", PROFILE_BASE_SCORES["fresher_academic"], "Empty resume"
 
     try:
@@ -246,7 +282,7 @@ def classify_profile(resume_text: str) -> Tuple[str, float, str]:
         reasoning = parsed.get("reasoning", "")
 
         if profile_type not in PROFILE_BASE_SCORES:
-            logger.warning(
+            logger.info(
                 "[GroqMastery] Unknown profile type '%s', defaulting to junior_professional.",
                 profile_type,
             )
@@ -279,8 +315,10 @@ def compute_mastery_scores(
       2. × BLOOM_DECAY[bloom_level] from catalog
       3. + MENTION_BOOST if skill label found in resume
       4. + LEADERSHIP_BOOST if leadership/scale signals found near skill
-      5. cap at NEGATION_CAP (0.45) if negation phrases found near skill
-      6. clamp to [0.10, 0.95]
+      5. + CERTIFICATION_BOOST if certification signals found near skill
+      6. cap at NEGATION_CAP (0.45) if negation phrases found near skill
+      7. apply CERTIFICATION_FLOOR (0.90) or SENIORITY_FLOOR (0.85) if applicable
+      8. clamp to [0.10, 0.95]
     """
     if not mapped_skills:
         return []
@@ -312,9 +350,17 @@ def compute_mastery_scores(
         has_leadership = _detect_leadership_signal(label, text_lower)
         leadership_boost = LEADERSHIP_BOOST if has_leadership and not is_negated else 0.0
 
+        # Check for certification
+        has_cert = _detect_certification(label, text_lower)
+        cert_boost = CERTIFICATION_BOOST if has_cert and not is_negated else 0.0
+        
+        # Check for seniority
+        has_seniority = _detect_seniority(label, text_lower)
+
         # Compute mastery
         mastery = _final_mastery(
-            base_score, bloom_level, mention_boost, leadership_boost, is_negated
+            base_score, bloom_level, mention_boost, leadership_boost, cert_boost, 
+            is_negated, has_cert, has_seniority
         )
 
         scored.append({
@@ -328,12 +374,20 @@ def compute_mastery_scores(
         })
 
         if is_negated:
-            logger.info(
+            logger.debug(
                 "[GroqMastery] NEGATION detected for '%s' — capped at %.2f", label, mastery
             )
         if has_leadership:
-            logger.info(
+            logger.debug(
                 "[GroqMastery] LEADERSHIP signal for '%s' — boosted", label
+            )
+        if has_cert:
+            logger.debug(
+                "[GroqMastery] CERTIFICATION detected for '%s' — boosted/floored", label
+            )
+        if has_seniority:
+            logger.debug(
+                "[GroqMastery] SENIORITY detected for '%s' — floored", label
             )
 
     return scored
@@ -419,7 +473,7 @@ def _detect_negation_context(label: str, text_lower: str) -> bool:
     """
     Check if a skill is mentioned with negation context in the resume.
 
-    Scans a 400-char window around the skill mention for negation phrases
+    Scans a 60-char window around the skill mention for negation phrases
     like "not production", "no experience", "basic only", etc.
     
     Also checks for negation patterns that may precede the skill mention
@@ -427,7 +481,8 @@ def _detect_negation_context(label: str, text_lower: str) -> bool:
 
     Returns True if negation detected — mastery should be hard-capped.
     """
-    context = _get_skill_context(label, text_lower, window=400)
+    # Reduce window to 60 chars for negation to avoid capturing unrelated "no experience" phrases
+    context = _get_skill_context(label, text_lower, window=60)
     if not context:
         return False
 
@@ -446,7 +501,8 @@ def _detect_negation_context(label: str, text_lower: str) -> bool:
     
     for neg_word in negation_words:
         # Look for negation word followed by the skill base word somewhere in context
-        pattern = f"{neg_word}.*{skill_base}"
+        # Using a much smaller max distance (e.g. 30 chars)
+        pattern = f"{neg_word}.{{0,30}}{re.escape(skill_base)}"
         if re.search(pattern, context, re.DOTALL | re.IGNORECASE):
             logger.debug(
                 "[GroqMastery] Negation pattern '%s.*%s' found in '%s'", neg_word, skill_base, label
@@ -460,12 +516,12 @@ def _detect_leadership_signal(label: str, text_lower: str) -> bool:
     """
     Check if a skill is mentioned alongside leadership/scale signals.
 
-    Scans a 300-char window around the skill mention for patterns like
+    Scans a 150-char window around the skill mention for patterns like
     "led team of 5", "50k+ users", "enterprise SaaS", "architected", etc.
 
     Returns True if leadership signals found — skill gets a +0.10 boost.
     """
-    context = _get_skill_context(label, text_lower, window=300)
+    context = _get_skill_context(label, text_lower, window=150)
     if not context:
         return False
 
@@ -479,25 +535,63 @@ def _detect_leadership_signal(label: str, text_lower: str) -> bool:
     return False
 
 
+def _detect_certification(label: str, text_lower: str) -> bool:
+    """Check for certification phrases near the skill."""
+    context = _get_skill_context(label, text_lower, window=100)
+    if not context:
+        return False
+    for pattern in CERTIFICATION_PATTERNS:
+        if re.search(pattern, context, re.IGNORECASE):
+            return True
+    return False
+
+
+def _detect_seniority(label: str, text_lower: str) -> bool:
+    """Check for seniority/years-in-role phrases in a larger context."""
+    # Seniority signals like "8 years experience" might be in a header far from the skill
+    context = _get_skill_context(label, text_lower, window=600)
+    if not context:
+        # If skill not found, check if seniority patterns exist ANYWHERE in resume 
+        # as a fallback if the skill is known to be a core daily driver
+        context = text_lower
+
+    for pattern in SENIORITY_PATTERNS:
+        if re.search(pattern, context, re.IGNORECASE):
+            return True
+    return False
+
+
 def _final_mastery(
     base_score: float,
     bloom_level: int,
     mention_boost: float,
     leadership_boost: float,
+    cert_boost: float,
     is_negated: bool,
+    has_cert: bool,
+    has_seniority: bool,
 ) -> float:
     """
     Compute final mastery score with bloom decay, boosts, and negation cap.
 
     Formula:
-      raw = base_score × BLOOM_DECAY[bloom] + mention_boost + leadership_boost
+      raw = base_score × BLOOM_DECAY[bloom] + boosts
       if negated: raw = min(raw, NEGATION_CAP)
+      if has_cert: raw = max(raw, CERTIFICATION_FLOOR)
+      if has_seniority: raw = max(raw, SENIORITY_FLOOR)
       return clamp(raw, 0.10, 0.95)
     """
     decay = BLOOM_DECAY.get(bloom_level, 0.80)
-    raw = (base_score * decay) + mention_boost + leadership_boost
+    raw = (base_score * decay) + mention_boost + leadership_boost + cert_boost
 
     if is_negated:
         raw = min(raw, NEGATION_CAP)
+    
+    # Floors apply only if NOT negated
+    if not is_negated:
+        if has_cert:
+            raw = max(raw, CERTIFICATION_FLOOR)
+        if has_seniority:
+            raw = max(raw, SENIORITY_FLOOR)
 
     return round(max(0.10, min(0.95, raw)), 2)

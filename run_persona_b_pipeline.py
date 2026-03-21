@@ -13,6 +13,7 @@ from app.catalog.loader import load_catalog
 from app.pathing.dag_builder import build_dag
 from app.pathing.gap_analyzer import compute_skill_gap, get_active_subgraph, NOISE_TAXONOMY_IDS
 from app.pathing.kahn import kahn_priority_sort
+from app.state import PathwayCourse, Metrics
 
 load_dotenv()
 
@@ -47,8 +48,17 @@ def run_persona_b_pipeline():
     required_filtered = [s for s in jd_required if s not in NOISE_TAXONOMY_IDS]
     print(f"  After noise filtering: {len(required_filtered)}")
     
-    skill_gap = compute_skill_gap(extracted_resume, jd_required)
-    print(f"  Skill gap: {len(skill_gap)}")
+    # Load catalog and build DAG
+    print("\nBuilding course DAG...")
+    catalog = load_catalog()
+    G = build_dag(catalog)
+    print(f"  DAG has {len(G)} courses")
+
+    # Compute skill gap
+    print("\nComputing skill gap...")
+    domain_filter = "operations"
+    skill_gap = compute_skill_gap(extracted_resume, jd_required, catalog, domain_filter)
+    print(f"  Skill gap (domain={domain_filter}): {len(skill_gap)}")
     
     # Write diff output
     print("\nGenerating diff output...")
@@ -66,15 +76,9 @@ def run_persona_b_pipeline():
     diff_file.write_text(json.dumps(diff_payload, indent=2), encoding="utf-8")
     print(f"  Saved: {diff_file}")
     
-    # Load catalog and build DAG
-    print("\nBuilding course DAG...")
-    catalog = load_catalog()
-    G = build_dag(catalog)
-    print(f"  DAG has {len(G)} courses")
-    
     # Compute active subgraph (assigned/prerequisite/skipped courses)
     print("\nComputing active subgraph...")
-    node_states = get_active_subgraph(G, skill_gap, extracted_resume)
+    node_states = get_active_subgraph(G, skill_gap, extracted_resume, domain_filter)
     active_node_ids = list(node_states.keys())
     print(f"  Active nodes: {len(active_node_ids)}")
     print(f"    Assigned: {sum(1 for s in node_states.values() if s == 'assigned')}")
@@ -118,11 +122,25 @@ def run_persona_b_pipeline():
     
     # Write Kahn output
     print("\nGenerating Kahn output...")
+    from app.pathing.pathing import add_skipped_nodes
+    initial_pathway = []
+    for cid in kahn_order:
+        initial_pathway.append({
+            "course_id": cid,
+            "node_state": node_states[cid],
+            "mastery_score": course_metadata[cid]["mastery"],
+            "confidence_score": 0.9 # placeholder
+        })
+    
+    # Add skipped nodes (those not in the active subgraph but relevant and mastered)
+    final_pathway = add_skipped_nodes(initial_pathway, extracted_resume, jd_required, catalog)
+
     kahn_payload = {
         "input_diff_file": str(diff_file),
         "active_node_ids": active_node_ids,
         "node_states": node_states,
         "kahn_order": kahn_order,
+        "final_pathway": final_pathway,
     }
     kahn_file = output_dir / "persona_b_kahn.json"
     kahn_file.write_text(json.dumps(kahn_payload, indent=2), encoding="utf-8")
@@ -139,6 +157,7 @@ def run_persona_b_pipeline():
     print(f"  Assigned: {sum(1 for s in node_states.values() if s == 'assigned')} courses")
     print(f"  Prerequisites: {sum(1 for s in node_states.values() if s == 'prerequisite')} courses")
     print(f"  Skipped: {sum(1 for s in node_states.values() if s == 'skipped')} courses")
+    print(f"  Total in Pathway (inc. independent skipped): {len(final_pathway)}")
     
     # Show top skills in resume
     resume_by_mastery = sorted(extracted_resume, key=lambda s: s["mastery_score"], reverse=True)

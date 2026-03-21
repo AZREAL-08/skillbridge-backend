@@ -271,26 +271,5 @@
     "label": "floor",
     "mastery_score": 0.0,
     "confidence_score": 0.7
-  },
-  {
-    "taxonomy_id": "KS125LS6N7WP4S6SFTCK",
-    "taxonomy_source": "emsi",
-    "label": "python",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
-    "taxonomy_id": "KS440W865GC4VRBW6LJP",
-    "taxonomy_source": "emsi",
-    "label": "sql",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
-    "taxonomy_id": "KS1205Y6CQ33MDZ4NZMC",
-    "taxonomy_source": "emsi",
-    "label": "ad hoc",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
   }
 ]
