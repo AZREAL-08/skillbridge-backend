@@ -3,17 +3,16 @@ FastAPI entry point — SkillBridge v2.0
 Implements both HR Admin and Candidate flows.
 """
 
-import json
 import uuid
 import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # --- Shared State Schemas ---
-from app.state import SkillEntry, StoredJD, PipelineState, CurrentState, TargetState, Question, StoredState
+from app.state import SkillEntry, StoredJD, PipelineState, CurrentState, TargetState, Question
 
 # --- Track 2: Extractor ---
 from app.extractor.extractor import extract_skills, extract_skills_from_jd
@@ -30,7 +29,6 @@ logger = logging.getLogger(__name__)
 # ===========================================================================
 DB_JDS: Dict[str, StoredJD] = {}
 DB_SESSIONS: Dict[str, CurrentState] = {}
-DB_STATES: Dict[str, StoredState] = {}
 
 # ===========================================================================
 # Pydantic Request Schemas
@@ -50,15 +48,19 @@ class JDConfirmRequest(BaseModel):
     required_skills: List[SkillEntry]
     department: str = ""
 
+class ResumeUploadRequest(BaseModel):
+    raw_text: str
+
 class ResumeConfirmRequest(BaseModel):
+    raw_text: str
     confirmed_skills: List[SkillEntry]
 
 class PathwayQuestionsRequest(BaseModel):
-    state_id: str
+    current_state_id: str
     jd_id: str
 
 class PathwayGenerateRequest(BaseModel):
-    state_id: str
+    current_state_id: str
     jd_id: str
     preferences: Dict[str, Any]
 
@@ -136,43 +138,28 @@ async def upload_resume(request: ResumeUploadRequest):
     return {"extracted_skills": extracted_skills}
 
 @app.post("/api/resume/confirm")
-async def confirm_resume(file: UploadFile = File(...), confirmed_skills_json: str = None):
-    """Saves the candidate's confirmed skills and creates a persistent state with ID."""
-    resume_content = await file.read()
-    raw_text = resume_content.decode('utf-8')
+async def confirm_resume(request: ResumeConfirmRequest):
+    """Saves the candidate's confirmed skills into a temporary session."""
+    session_id = f"sess_{uuid.uuid4().hex[:8]}"
     
-    # Parse confirmed skills from JSON string if provided
-    try:
-        confirmed_skills = json.loads(confirmed_skills_json) if confirmed_skills_json else []
-    except json.JSONDecodeError:
-        confirmed_skills = []
-    
-    # Create state entry
-    state_id = f"state_{uuid.uuid4().hex[:8]}"
-    
-    current_state: CurrentState = {
-        "raw_resume_text": raw_text,
-        "extracted_skills": confirmed_skills
+    DB_SESSIONS[session_id] = {
+        "raw_resume_text": request.raw_text,
+        "extracted_skills": request.confirmed_skills
     }
     
-    stored_state: StoredState = {
-        "state_id": state_id,
-        "current": current_state,
-        "created_at": datetime.now().isoformat()
-    }
-    
-    DB_STATES[state_id] = stored_state
-    DB_SESSIONS[state_id] = current_state
-    
-    return {"state_id": state_id, "current_state_id": state_id, "status": "confirmed"}
+    return {"current_state_id": session_id}
+
+# ===========================================================================
+# 4.3 Pathway Generation (The Core Engine)
+# ===========================================================================
 
 @app.post("/api/pathway/questions")
 async def generate_questions(request: PathwayQuestionsRequest):
     """
     Generates dynamic preference questions based on the candidate's gap.
     """
-    if request.state_id not in DB_STATES:
-        raise HTTPException(status_code=404, detail="State not found")
+    if request.current_state_id not in DB_SESSIONS:
+        raise HTTPException(status_code=404, detail="Session not found")
     if request.jd_id not in DB_JDS:
         raise HTTPException(status_code=404, detail="JD not found")
 
@@ -227,13 +214,12 @@ async def generate_pathway(request: PathwayGenerateRequest):
     """
     Runs Kahn's Algorithm + Priority Queue and returns the final PipelineState.
     """
-    if request.state_id not in DB_STATES:
-        raise HTTPException(status_code=404, detail="State not found")
+    if request.current_state_id not in DB_SESSIONS:
+        raise HTTPException(status_code=404, detail="Session not found")
     if request.jd_id not in DB_JDS:
         raise HTTPException(status_code=404, detail="JD not found")
 
-    stored_state = DB_STATES[request.state_id]
-    current_state = stored_state["current"]
+    current_state = DB_SESSIONS[request.current_state_id]
     target_jd = DB_JDS[request.jd_id]
 
     try:
