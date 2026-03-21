@@ -24,7 +24,7 @@
     "taxonomy_id": "ESAD92AA2437BEF8C136",
     "taxonomy_source": "emsi",
     "label": "express js",
-    "mastery_score": 0.66,
+    "mastery_score": 0.45,
     "confidence_score": 0.7
   },
   {
@@ -38,7 +38,7 @@
     "taxonomy_id": "KS122Q960QYMW3YH0YWF",
     "taxonomy_source": "emsi",
     "label": "data visualization",
-    "mastery_score": 0.83,
+    "mastery_score": 0.45,
     "confidence_score": 0.7
   },
   {
@@ -213,49 +213,49 @@
     "taxonomy_id": "KS123GK5WYFRJ4L20YK2",
     "taxonomy_source": "emsi",
     "label": "middleware",
-    "mastery_score": 0.83,
+    "mastery_score": 0.45,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS125R96VYB8GM02DSMV",
     "taxonomy_source": "emsi",
     "label": "layer",
-    "mastery_score": 0.83,
+    "mastery_score": 0.45,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS125716TLTGH6SDHJD1",
     "taxonomy_source": "emsi",
     "label": "integrated",
-    "mastery_score": 0.83,
+    "mastery_score": 0.45,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KSNOMHZ8JVAJAG3SC1JI",
     "taxonomy_source": "emsi",
     "label": "stripe",
-    "mastery_score": 0.83,
+    "mastery_score": 0.45,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS441L660N7FNTG85TW0",
     "taxonomy_source": "emsi",
     "label": "twilio",
-    "mastery_score": 0.83,
+    "mastery_score": 0.45,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KSLGMEUI4NQG5PNE613U",
     "taxonomy_source": "emsi",
     "label": "sendgrid",
-    "mastery_score": 0.83,
+    "mastery_score": 0.45,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS120ST66K9HBSZ7MPS3",
     "taxonomy_source": "emsi",
     "label": "automated testing",
-    "mastery_score": 0.83,
+    "mastery_score": 0.45,
     "confidence_score": 0.7
   },
   {
@@ -276,7 +276,7 @@
     "taxonomy_id": "KS120GV5ZXR64CJLL1J4",
     "taxonomy_source": "emsi",
     "label": "analytics",
-    "mastery_score": 0.66,
+    "mastery_score": 0.45,
     "confidence_score": 0.7
   },
   {
@@ -325,21 +325,21 @@
     "taxonomy_id": "KSIDDB2VJJYDU67905S9",
     "taxonomy_source": "emsi",
     "label": "webpack",
-    "mastery_score": 0.83,
+    "mastery_score": 0.45,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS1H7C2ZC7LXQQ6UN22I",
     "taxonomy_source": "emsi",
     "label": "firebase",
-    "mastery_score": 0.83,
+    "mastery_score": 0.45,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS122VT6S2JJ5C5D80NF",
     "taxonomy_source": "emsi",
     "label": "linux",
-    "mastery_score": 0.95,
+    "mastery_score": 0.45,
     "confidence_score": 0.7
   },
   {
@@ -360,21 +360,21 @@
     "taxonomy_id": "KS3EP9CXRSFB1XIK8GDP",
     "taxonomy_source": "emsi",
     "label": "swagger",
-    "mastery_score": 0.95,
+    "mastery_score": 0.45,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS120BC6BLYD8GXK5DSW",
     "taxonomy_source": "emsi",
     "label": "agile",
-    "mastery_score": 0.95,
+    "mastery_score": 0.45,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS126H56LT9GNSVJTMQ5",
+    "taxonomy_id": "KS440B8766BBFP2V6GLM",
     "taxonomy_source": "emsi",
     "label": "master certified",
-    "mastery_score": 0.95,
+    "mastery_score": 0.45,
     "confidence_score": 0.7
   }
 ]

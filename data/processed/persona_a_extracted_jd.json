@@ -203,7 +203,7 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS1226N77K2R22TWDSSP",
+    "taxonomy_id": "KS125746Y5ZDLQ9PGMQ3",
     "taxonomy_source": "emsi",
     "label": "integration tests",
     "mastery_score": 0.0,
@@ -294,7 +294,7 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS127BT6L27S2L1NFFXP",
+    "taxonomy_id": "KS126HV6CFLVGG8L97CP",
     "taxonomy_source": "emsi",
     "label": "message queues",
     "mastery_score": 0.0,
