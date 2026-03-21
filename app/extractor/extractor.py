@@ -4,17 +4,32 @@ from typing import Dict, List, Set
 from app.extractor.schemas       import SkillEntry
 from app.extractor.skillner_model import extract_explicit_skills
 from app.extractor.jobbert_model  import extract_implicit_skills
-from app.extractor.groq_mastery   import estimate_mastery
+from app.extractor.groq_mastery   import compute_mastery_scores
 
 logger = logging.getLogger(__name__)
 
 
-def extract_skills(raw_text: str) -> List[SkillEntry]:
+def extract_skills(raw_text: str, catalog: List[dict] = None) -> List[SkillEntry]:
+    """
+    Full extraction pipeline for RESUME text.
+
+    Stages:
+      1. SkillNER explicit extraction
+      2. JobBERT implicit extraction
+      3. Merge & deduplicate
+      4. Profile-classification mastery scoring (single Groq call + bloom decay)
+      5. Cast to SkillEntry
+
+    Args:
+        raw_text: Resume text to extract skills from.
+        catalog:  Course catalog list (needed for bloom-level mastery decay).
+                  If None, mastery defaults to bloom_level=3 for all skills.
+    """
     if not raw_text or not raw_text.strip():
         logger.warning("[Orchestrator] Empty input text. Returning [].")
         return []
 
-    logger.info("[Orchestrator] Starting skill extraction pipeline.")
+    logger.info("[Orchestrator] Starting skill extraction pipeline (resume mode).")
 
     # ── Stage 1: Explicit extraction (SkillNER → EMSI IDs) ───────────────────
     explicit_skills: List[dict] = []
@@ -36,24 +51,82 @@ def extract_skills(raw_text: str) -> List[SkillEntry]:
     if not merged:
         return []
 
-    # ── Stage 4: Mastery scoring (Groq / Llama-3) ────────────────────────────
+    # ── Stage 4: Profile-classification mastery scoring ───────────────────────
     scored_skills: List[dict] = []
     try:
-        scored_skills = estimate_mastery(raw_text, merged)
+        scored_skills = compute_mastery_scores(merged, raw_text, catalog or [])
     except Exception as exc:
         logger.error("[Orchestrator] Stage 4 failed: %s", exc)
+        # Fallback: assign neutral mastery
         scored_skills = [
             {
                 "taxonomy_id": s["taxonomy_id"],
                 "taxonomy_source": s["taxonomy_source"],
                 "label": s["label"],
                 "mastery_score": 0.3,
+                "confidence_score": s.get("confidence_score", 0.5),
             }
             for s in merged
         ]
 
     # ── Stage 5: Cast to strict SkillEntry TypedDict + assign confidence ─────
     return _cast_to_skill_entries(scored_skills)
+
+
+def extract_skills_from_jd(raw_text: str) -> List[SkillEntry]:
+    """
+    Extraction pipeline for JD (job description) text.
+
+    JDs don't have mastery — they have requirements. This pipeline:
+      1. SkillNER explicit extraction
+      2. JobBERT implicit extraction
+      3. Merge & deduplicate
+      4. SKIP mastery scoring — assign mastery_score = 0.0 (neutral placeholder)
+      5. Cast to SkillEntry
+
+    Args:
+        raw_text: Job description text to extract required skills from.
+    """
+    if not raw_text or not raw_text.strip():
+        logger.warning("[Orchestrator] Empty JD text. Returning [].")
+        return []
+
+    logger.info("[Orchestrator] Starting skill extraction pipeline (JD mode — no mastery).")
+
+    # ── Stage 1: Explicit extraction (SkillNER → EMSI IDs) ───────────────────
+    explicit_skills: List[dict] = []
+    try:
+        explicit_skills = extract_explicit_skills(raw_text)
+    except Exception as exc:
+        logger.error("[Orchestrator] Stage 1 (JD) failed: %s", exc)
+
+    # ── Stage 2: Implicit extraction (JobBERT → EMSI map / inferred) ─────────
+    implicit_skills: List[dict] = []
+    try:
+        implicit_skills = extract_implicit_skills(raw_text)
+    except Exception as exc:
+        logger.error("[Orchestrator] Stage 2 (JD) failed: %s", exc)
+
+    # ── Stage 3: Merge and deduplicate ───────────────────────────────────────
+    merged = _merge_and_deduplicate(explicit_skills, implicit_skills)
+
+    if not merged:
+        return []
+
+    # ── Stage 4: SKIP mastery — JD skills get neutral 0.0 ────────────────────
+    jd_skills = [
+        {
+            "taxonomy_id": s["taxonomy_id"],
+            "taxonomy_source": s["taxonomy_source"],
+            "label": s["label"],
+            "mastery_score": 0.0,
+            "confidence_score": s.get("confidence_score", 0.5),
+        }
+        for s in merged
+    ]
+
+    # ── Stage 5: Cast to strict SkillEntry TypedDict ─────────────────────────
+    return _cast_to_skill_entries(jd_skills)
 
 
 def _merge_and_deduplicate(

@@ -1,16 +1,39 @@
-Senior Frontend Engineer with 6 years of experience building scalable web applications.
+Arjun Mehta
+arjun.mehta@gmail.com | +91-9845123670 | linkedin.com/in/arjunmehta-dev | github.com/arjunmehta-dev
 
-Technical Skills & Experience:
-- React.js: Led the frontend architecture for three enterprise SaaS products serving 50k+ users. Built custom component libraries, implemented complex state management with Redux and Context API, and optimized rendering performance.
-- JavaScript: Core skill across all roles. ES6+, TypeScript, async patterns, closures, prototypal inheritance. Mentored 4 junior developers on JavaScript best practices.
-- HTML & CSS: Expert-level semantic HTML5, responsive design with CSS Grid and Flexbox, WCAG accessibility compliance. Created design systems used across multiple product teams.
-- Git: Daily workflow tool. Branch strategies (GitFlow, trunk-based), code reviews, merge conflict resolution, CI/CD integration with GitHub.
-- REST APIs: Consumed dozens of RESTful endpoints. Built API integration layers in React. Familiar with OpenAPI specs and Postman testing.
-- Node.js: Used Express.js for small internal tools and prototyping. Set up basic server-side rendering for SEO. Not production-grade backend experience.
-- SQL: Written SELECT queries for debugging and data extraction. Basic JOINs and WHERE clauses. Never designed a schema or optimized queries.
-- Agile: Daily standups, sprint planning, retrospectives. Served as Scrum Master for a team of 8 for one year.
+EXPERIENCE
 
-Professional History:
-- Lead Frontend Engineer, TechCorp (2021-present): Architected React-based dashboard platform. Reduced page load times by 40%. Led team of 5 frontend developers.
-- Frontend Developer, StartupXYZ (2019-2021): Built customer-facing web app from scratch using React and TypeScript. Integrated 12 third-party APIs.
-- Junior Developer, WebAgency (2018-2019): Maintained WordPress sites, built landing pages with HTML/CSS/JavaScript.
+Senior Frontend Engineer — Razorpay, Bengaluru (Jan 2022 – Present)
+- Led frontend architecture for Razorpay's merchant dashboard, serving 1.2M+ active merchants
+- Migrated legacy class-based React codebase to functional components with hooks, reducing bundle size by 34%
+- Built a reusable component library (50+ components) adopted across 4 product teams
+- Implemented micro-frontend architecture using Module Federation, enabling independent team deployments
+- Managed state at scale using Redux Toolkit and React Query; eliminated 60% of redundant API calls
+- Mentored 3 junior frontend engineers through weekly code reviews and pair programming sessions
+- Collaborated with backend teams to define REST API contracts; used Postman and OpenAPI specs daily
+
+Frontend Developer — Freshworks, Chennai (Jul 2019 – Dec 2021)
+- Built customer-facing UI for Freshdesk's ticketing module using React and TypeScript
+- Worked closely with Node.js backend team; wrote basic Express.js middleware for BFF (Backend for Frontend) layer
+- Integrated 8 third-party APIs including Stripe, Twilio, and SendGrid from the frontend layer
+- Set up GitHub Actions CI pipeline for automated testing and Vercel preview deployments
+- Wrote SQL queries for debugging via internal admin tools; basic JOINs and aggregations only
+
+Junior Frontend Developer — Sigmoid Analytics, Bengaluru (Aug 2018 – Jun 2019)
+- Built data visualization dashboards using React and D3.js for enterprise analytics clients
+- Maintained and extended existing HTML/CSS/JavaScript codebases
+- First professional exposure to Git workflows (GitFlow branching, PRs, code reviews)
+
+EDUCATION
+
+Bachelor of Engineering, Information Science — RV College of Engineering, Bengaluru (2014–2018)
+CGPA: 7.8 / 10.0
+
+TOOLS & TECHNOLOGIES
+
+Languages:       JavaScript (ES6+), TypeScript, HTML5, CSS3, Python (scripting only)
+Frameworks:      React, Next.js, Redux Toolkit, React Query, Tailwind CSS
+Tools:           Git, GitHub Actions, Webpack, Vite, Postman, Figma
+Platforms:       Vercel, Firebase, Linux (daily dev environment)
+Databases:       SQL (SELECT/JOIN/WHERE — read-only, no schema design)
+Other:           REST API consumption, OpenAPI/Swagger, Agile/Scrum (Scrum Master certified)

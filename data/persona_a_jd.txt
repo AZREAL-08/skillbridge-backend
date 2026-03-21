@@ -1,20 +1,35 @@
-Full-Stack Software Engineer
+Full-Stack Software Engineer — Setu (API Infrastructure), Bengaluru
 
-We are looking for an experienced Full-Stack Engineer to design and build production-grade backend services and APIs.
+About the Role:
+Setu builds financial infrastructure APIs used by banks, fintechs, and enterprises across India.
+We are looking for a Full-Stack Engineer to own backend services end-to-end — from database
+design to deployment. You will work across the stack, but the majority of this role is backend.
+
+Responsibilities:
+- Design, build, and maintain production Node.js/Express.js services handling 10M+ daily API calls
+- Own PostgreSQL database schema design, query optimization, and migration management
+- Containerize services using Docker; maintain Docker Compose environments for local development
+- Build and maintain CI/CD pipelines using GitHub Actions for automated testing and deployment
+- Design RESTful and event-driven APIs following internal architecture standards
+- Deploy and monitor services on AWS (EC2, RDS, S3, CloudWatch)
+- Implement Redis caching layers for high-throughput endpoints
+- Participate in system design reviews; contribute to architecture decisions for new services
+- Write unit and integration tests; maintain >80% code coverage on owned services
 
 Required Skills:
-- Node.js: Build and maintain production backend services using Node.js and Express.js
-- PostgreSQL: Design database schemas, write complex queries, and optimize performance
-- Docker: Containerize applications for consistent development and deployment environments
-- CI/CD: Set up and maintain continuous integration and delivery pipelines with GitHub Actions
-- System Design: Design scalable API architectures and microservices
-- REST APIs: Design and implement RESTful API endpoints following best practices
-- Git: Version control, branching strategies, and code review workflows
-- JavaScript: Strong foundation in modern JavaScript (ES6+, async/await, TypeScript)
-- Redis: Implement caching strategies for high-performance applications
-- Cloud Computing: Deploy and manage applications on cloud platforms
+- Node.js: 2+ years building production backend services with Express.js
+- PostgreSQL: Schema design, complex queries, indexing strategies, query explain plans
+- Docker: Containerization, Docker Compose, image optimization
+- CI/CD: GitHub Actions or equivalent; automated test pipelines and deployment workflows
+- System Design: Ability to design scalable services; experience with microservices or SOA
+- REST APIs: API design, versioning, rate limiting, authentication (JWT/OAuth2)
+- Git: Advanced workflows — branching strategies, PR reviews, rebasing, tagging
+- TypeScript: Strong typing, interfaces, generics in a Node.js context
+- Redis: Caching patterns, TTL strategies, pub/sub basics
+- Cloud: AWS or GCP fundamentals — deploying and monitoring backend services
 
 Nice to Have:
-- React.js experience for full-stack capabilities
-- Microservices architecture experience
-- Agile development methodology experience
+- React.js experience for occasional frontend contributions
+- Familiarity with message queues (RabbitMQ, Kafka)
+- Experience with Terraform or infrastructure-as-code tooling
+- Open source contributions

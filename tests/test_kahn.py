@@ -1,10 +1,14 @@
 from app.pathing.kahn import kahn_priority_sort
-from app.pathing.gap_analyzer import compute_skill_gap, get_active_subgraph
+from app.pathing.gap_analyzer import compute_skill_gap, get_active_subgraph, NOISE_TAXONOMY_IDS
 from app.catalog.loader import load_catalog
 from app.pathing.dag_builder import build_dag
-from app.extractor.extractor import extract_skills
+from app.extractor.extractor import extract_skills, extract_skills_from_jd
 from pathlib import Path
 import json
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 def test_kahn_priority():
     # A -> B
@@ -13,9 +17,9 @@ def test_kahn_priority():
     # Priority formula: (gap_count * (1 - mastery)) / (hours + 1e-5)
     nodes = ['A', 'B', 'C']
     meta = {
-        'A': {'prerequisites': [], 'gap_count': 1, 'mastery': 0.0, 'hours': 1.0}, # Priority ~ 1.0
-        'B': {'prerequisites': ['A'], 'gap_count': 1, 'mastery': 0.0, 'hours': 10.0}, # Priority ~ 0.1
-        'C': {'prerequisites': ['A'], 'gap_count': 1, 'mastery': 0.0, 'hours': 1.0}, # Priority ~ 1.0
+        'A': {'prerequisites': [], 'gap_count': 1, 'mastery': 0.0, 'hours': 1.0, 'bloom_level': 2}, # Priority ~ 1.0
+        'B': {'prerequisites': ['A'], 'gap_count': 1, 'mastery': 0.0, 'hours': 10.0, 'bloom_level': 3}, # Priority ~ 0.1
+        'C': {'prerequisites': ['A'], 'gap_count': 1, 'mastery': 0.0, 'hours': 1.0, 'bloom_level': 3}, # Priority ~ 1.0
     }
     # To ensure C > B in priority:
     # B priority: (1 * 1) / 10 = 0.1
@@ -27,34 +31,52 @@ def test_kahn_independent():
     # A and B are independent. B has higher priority.
     nodes = ['A', 'B']
     meta = {
-        'A': {'prerequisites': [], 'gap_count': 1, 'mastery': 0.0, 'hours': 10.0}, # Priority ~ 0.1
-        'B': {'prerequisites': [], 'gap_count': 1, 'mastery': 0.0, 'hours': 1.0}, # Priority ~ 1.0
+        'A': {'prerequisites': [], 'gap_count': 1, 'mastery': 0.0, 'hours': 10.0, 'bloom_level': 3}, # Priority ~ 0.1
+        'B': {'prerequisites': [], 'gap_count': 1, 'mastery': 0.0, 'hours': 1.0, 'bloom_level': 3}, # Priority ~ 1.0
     }
     order = kahn_priority_sort(nodes, meta)
     assert order == ['B', 'A']
 
 
+def test_kahn_bloom_level_tiebreak():
+    """When priorities are equal, lower bloom_level (more foundational) sorts first."""
+    nodes = ['FOUNDATION', 'ADVANCED']
+    meta = {
+        'FOUNDATION': {'prerequisites': [], 'gap_count': 1, 'mastery': 0.0, 'hours': 5.0, 'bloom_level': 1},
+        'ADVANCED':   {'prerequisites': [], 'gap_count': 1, 'mastery': 0.0, 'hours': 5.0, 'bloom_level': 4},
+    }
+    # Same priority = (1 * 1) / 5 = 0.2 for both
+    # FOUNDATION has bloom_level=1, ADVANCED has bloom_level=4
+    # FOUNDATION should come first (lower bloom = more foundational)
+    order = kahn_priority_sort(nodes, meta)
+    assert order == ['FOUNDATION', 'ADVANCED'], f"Expected foundational first, got {order}"
+
+
 def _load_or_build_processed_inputs(output_dir: Path) -> tuple[list[dict], list[dict], list[str], Path]:
-    """Load processed artifacts; create them if missing, and persist diff output."""
+    """Always regenerate processed artifacts from raw persona data."""
     project_root = Path(__file__).resolve().parents[1]
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    catalog = load_catalog()
+    assert catalog, "Catalog must be available at data/catalog.json"
 
     resume_file = output_dir / "persona_a_extracted_resume.json"
     jd_file = output_dir / "persona_a_extracted_jd.json"
     diff_file = output_dir / "persona_a_diff_output.json"
 
+    # Check if processed files exist; if so, load them. Otherwise, generate.
     if resume_file.exists():
         extracted_resume = json.loads(resume_file.read_text(encoding="utf-8"))
     else:
         resume_text = (project_root / "data" / "persona_a_resume.txt").read_text(encoding="utf-8")
-        extracted_resume = extract_skills(resume_text)
+        extracted_resume = extract_skills(resume_text, catalog)
         resume_file.write_text(json.dumps(extracted_resume, indent=2), encoding="utf-8")
 
     if jd_file.exists():
         extracted_jd = json.loads(jd_file.read_text(encoding="utf-8"))
     else:
         jd_text = (project_root / "data" / "persona_a_jd.txt").read_text(encoding="utf-8")
-        extracted_jd = extract_skills(jd_text)
+        extracted_jd = extract_skills_from_jd(jd_text)
         jd_file.write_text(json.dumps(extracted_jd, indent=2), encoding="utf-8")
 
     assert extracted_resume, "Processed resume extraction must not be empty"
@@ -63,20 +85,21 @@ def _load_or_build_processed_inputs(output_dir: Path) -> tuple[list[dict], list[
     jd_required = [s["taxonomy_id"] for s in extracted_jd if s.get("taxonomy_source") == "emsi"]
     assert jd_required, "Processed JD must contain emsi taxonomy IDs"
 
-    if diff_file.exists():
-        diff_payload = json.loads(diff_file.read_text(encoding="utf-8"))
-        skill_gap = diff_payload.get("skill_gap", [])
-    else:
-        skill_gap = compute_skill_gap(extracted_resume, jd_required)
-        diff_payload = {
-            "required_skills": jd_required,
-            "skill_gap": skill_gap,
-            "counts": {
-                "required": len(jd_required),
-                "gap": len(skill_gap),
-            },
-        }
-        diff_file.write_text(json.dumps(diff_payload, indent=2), encoding="utf-8")
+    # Always recompute gap (applies noise filtering)
+    skill_gap = compute_skill_gap(extracted_resume, jd_required)
+    diff_payload = {
+        "required_skills": jd_required,
+        "required_skills_after_noise_filter": [
+            s for s in jd_required if s not in NOISE_TAXONOMY_IDS
+        ],
+        "skill_gap": skill_gap,
+        "counts": {
+            "required_raw": len(jd_required),
+            "required_filtered": len([s for s in jd_required if s not in NOISE_TAXONOMY_IDS]),
+            "gap": len(skill_gap),
+        },
+    }
+    diff_file.write_text(json.dumps(diff_payload, indent=2), encoding="utf-8")
 
     return extracted_resume, extracted_jd, skill_gap, diff_file
 
@@ -117,6 +140,7 @@ def _run_kahn_from_catalog_and_processed(output_dir: Path) -> dict:
             "gap_count": gap_count,
             "mastery": avg_mastery,
             "hours": meta.get("estimated_hours", 1.0),
+            "bloom_level": meta.get("bloom_level", 3),
         }
 
     kahn_order = kahn_priority_sort(active_node_ids, course_metadata) if active_node_ids else []

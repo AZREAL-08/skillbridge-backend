@@ -1,7 +1,7 @@
 import networkx as nx
-from app.pathing.gap_analyzer import compute_skill_gap, get_active_subgraph
+from app.pathing.gap_analyzer import compute_skill_gap, get_active_subgraph, NOISE_TAXONOMY_IDS
 from app.state import SkillEntry
-from app.extractor.extractor import extract_skills
+from app.extractor.extractor import extract_skills, extract_skills_from_jd
 from app.catalog.loader import load_catalog
 from app.pathing.dag_builder import build_dag
 import json
@@ -12,7 +12,11 @@ load_dotenv()
 
 
 def _run_gap_analyzer_from_persona_and_catalog(output_dir: Path) -> dict:
-    """Run extractor -> persist -> reload -> gap analyzer using catalog DAG."""
+    """Run extractor -> persist -> reload -> gap analyzer using catalog DAG.
+    
+    Always regenerates processed files to avoid stale cache.
+    Uses extract_skills_from_jd() for JD text (no mastery scoring).
+    """
     project_root = Path(__file__).resolve().parents[1]
     persona_resume_path = project_root / "data" / "persona_a_resume.txt"
     persona_jd_path = project_root / "data" / "persona_a_jd.txt"
@@ -20,8 +24,13 @@ def _run_gap_analyzer_from_persona_and_catalog(output_dir: Path) -> dict:
     resume_text = persona_resume_path.read_text(encoding="utf-8")
     jd_text = persona_jd_path.read_text(encoding="utf-8")
 
-    extracted_resume = extract_skills(resume_text)
-    extracted_jd = extract_skills(jd_text)
+    catalog = load_catalog()
+    assert catalog, "Catalog must be available at data/catalog.json"
+
+    # Extract resume skills WITH mastery (profile classification + bloom decay)
+    extracted_resume = extract_skills(resume_text, catalog)
+    # Extract JD skills WITHOUT mastery
+    extracted_jd = extract_skills_from_jd(jd_text)
 
     assert extracted_resume, "Extractor should return at least one resume skill"
     assert extracted_jd, "Extractor should return at least one JD skill"
@@ -41,22 +50,24 @@ def _run_gap_analyzer_from_persona_and_catalog(output_dir: Path) -> dict:
 
     skill_gap = compute_skill_gap(loaded_extracted_resume, required_skills)
 
-    catalog = load_catalog()
-    if not catalog:
-        catalog = [
-            {
-                "course_id": "C-MOCK-001",
-                "title": "Mock Course",
-                "skills_taught": required_skills[:1],
-                "prerequisites": [],
-                "estimated_hours": 1.0,
-                "difficulty": "Beginner",
-                "domain": "Mock",
-            }
-        ]
-
     G = build_dag(catalog)
     node_states = get_active_subgraph(G, skill_gap, loaded_extracted_resume)
+
+    # Save diff output
+    diff_file = output_dir / "persona_a_diff_output.json"
+    diff_payload = {
+        "required_skills": required_skills,
+        "required_skills_after_noise_filter": [
+            s for s in required_skills if s not in NOISE_TAXONOMY_IDS
+        ],
+        "skill_gap": skill_gap,
+        "counts": {
+            "required_raw": len(required_skills),
+            "required_filtered": len([s for s in required_skills if s not in NOISE_TAXONOMY_IDS]),
+            "gap": len(skill_gap),
+        },
+    }
+    diff_file.write_text(json.dumps(diff_payload, indent=2), encoding="utf-8")
 
     return {
         "persisted_resume_file": str(persisted_resume),
@@ -88,6 +99,22 @@ def test_compute_skill_gap_inferred_excluded():
     # s1 is inferred (not emsi), so it doesn't count as mastered
     gap = compute_skill_gap(extracted, required)
     assert set(gap) == {"s1", "s2", "s3"}
+
+def test_noise_skill_filtering():
+    """Noise skills should be filtered from required_skills before gap analysis."""
+    extracted = [
+        {"taxonomy_id": "s1", "taxonomy_source": "emsi", "label": "L1", "mastery_score": 0.5, "confidence_score": 1.0},
+    ]
+    # Include real skill + known noise IDs
+    required = [
+        "s1",
+        "KS4425C7820LCHZS7VGX",  # "write" — noise
+        "KS4400B70JFSWXTYH0P2",  # "nice" — noise
+        "KS124RX787SQ1WVD8XF6",  # "scalable" — noise
+    ]
+    gap = compute_skill_gap(extracted, required)
+    # Only s1 should remain (noise filtered, s1 not mastered at 0.5)
+    assert gap == ["s1"], f"Expected ['s1'], got {gap}"
 
 def test_get_active_subgraph_with_prereq():
     G = nx.DiGraph()

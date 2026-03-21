@@ -1,19 +1,34 @@
-Supply Chain Operations Manager
+Supply Chain Operations Manager — Meesho, Bengaluru
 
-We are seeking a Supply Chain Operations Manager to lead our logistics operations and drive data-informed decision-making.
+About the Role:
+Meesho is India's largest social commerce platform with 140M+ customers and a network of
+1,200+ delivery partners. We are hiring a Supply Chain Operations Manager to own the
+analytics, vendor strategy, and cross-functional execution for our regional fulfillment network.
+
+This is a step up from floor-level operations — you will be managing managers, owning P&L,
+and driving decisions from data rather than instinct.
+
+Responsibilities:
+- Own end-to-end supply chain performance for the South India fulfillment cluster (4 facilities)
+- Build and maintain operational dashboards in Power BI for weekly leadership reviews
+- Lead ERP migration from legacy WMS to SAP S/4HANA for the regional cluster
+- Manage vendor contracts for 30+ logistics partners; negotiate SLAs and rate cards
+- Develop and own the annual operations budget (~₹40Cr); track actuals vs forecast monthly
+- Use supply chain analytics to identify demand patterns, reduce stockouts, and optimize routing
+- Lead a team of 4 Operations Leads (each managing 15–30 associates)
+- Drive cross-functional initiatives with tech, finance, and commercial teams
 
 Required Skills:
-- Supply Chain Management: Oversee end-to-end supply chain operations including procurement, logistics, and distribution
-- ERP Systems: Proficiency with enterprise resource planning platforms (SAP, Oracle, or similar)
-- Advanced Excel & Power BI: Create dashboards, reports, and data visualizations for stakeholder presentations
-- Cross-functional Leadership: Lead teams across departments, manage managers, and drive organizational change
-- Budget Management: Own P&L for operations division, manage budgets, and optimize cost structures
-- Vendor Management: Negotiate contracts, manage supplier relationships, and ensure procurement compliance
-- Analytics: Use data analytics to identify trends, optimize processes, and make strategic decisions
-- Inventory Management: Oversee multi-location inventory systems and optimize stock levels
+- ERP Systems: Hands-on experience with SAP (MM/WM/S4HANA) or Oracle SCM — beyond data entry
+- Advanced Excel & Power BI: Build dashboards, write DAX measures, create executive-level reports
+- Supply Chain Analytics: Demand forecasting, inventory optimization, cost-per-shipment analysis
+- Cross-functional Leadership: Experience managing leads or managers, not just associates
+- Budget Management: Ownership of operational P&L; variance analysis and cost optimization
+- Vendor Management: Contract negotiation, SLA management, supplier performance reviews
+- Inventory Management: Multi-location inventory strategy, safety stock modeling, ABC analysis
 
 Nice to Have:
-- OSHA safety certification
-- Forklift operation experience
-- Experience with warehouse management systems
-- Procurement and contract negotiation background
+- OSHA or safety certification background
+- Warehouse operations hands-on experience (strong plus for credibility with floor teams)
+- Familiarity with Python or SQL for ad-hoc data queries
+- Six Sigma Green Belt or equivalent process improvement certification

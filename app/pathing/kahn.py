@@ -1,6 +1,7 @@
 """
 Kahn's algorithm with priority queue.
 Max-Heap pops the course with the highest competency gain per hour.
+Secondary sort by bloom_level: foundational courses first when priorities tie.
 """
 
 import heapq
@@ -20,8 +21,14 @@ def compute_priority(
 def kahn_priority_sort(active_subgraph_nodes: List[str], course_metadata: Dict[str, Any]) -> List[str]:
     """
     Topologically sorts nodes in the active subgraph using priority-based Kahn's algorithm.
+    
+    When two courses have equal gap-closing priority, the one with a LOWER
+    bloom_level (more foundational) sorts first. This ensures foundational
+    courses like Linux CLI Basics appear before advanced courses like
+    PostgreSQL Query Optimization when they have similar priority scores.
+    
     :param active_subgraph_nodes: list of course_ids in the subgraph
-    :param course_metadata: dict mapping course_id to metadata (prerequisites, skills_taught, mastery, hours)
+    :param course_metadata: dict mapping course_id to metadata (prerequisites, skills_taught, mastery, hours, bloom_level)
     :return: list of course_ids in sorted order
     """
     # Build local graph for the subgraph
@@ -36,6 +43,10 @@ def kahn_priority_sort(active_subgraph_nodes: List[str], course_metadata: Dict[s
                 local_indegree[cid] += 1
                 
     # Max-heap for priority (use negative values for heapq)
+    # Tuple: (-priority, bloom_level, cid)
+    #   -priority: higher priority courses come first (negated for min-heap)
+    #   bloom_level: lower bloom = more foundational = sorts first (natural order)
+    #   cid: stable tiebreaker
     priority_queue = []
     for cid in active_subgraph_nodes:
         if local_indegree[cid] == 0:
@@ -44,13 +55,14 @@ def kahn_priority_sort(active_subgraph_nodes: List[str], course_metadata: Dict[s
             gap_count = meta.get('gap_count', 0)
             mastery = meta.get('mastery', 0.0)
             hours = meta.get('hours', 1.0)
+            bloom_level = meta.get('bloom_level', 3)
             
             priority = compute_priority(gap_count, mastery, hours)
-            heapq.heappush(priority_queue, (-priority, cid))
+            heapq.heappush(priority_queue, (-priority, bloom_level, cid))
             
     sorted_order = []
     while priority_queue:
-        neg_priority, current_cid = heapq.heappop(priority_queue)
+        neg_priority, bloom, current_cid = heapq.heappop(priority_queue)
         sorted_order.append(current_cid)
         
         for neighbor in local_adj[current_cid]:
@@ -60,9 +72,10 @@ def kahn_priority_sort(active_subgraph_nodes: List[str], course_metadata: Dict[s
                 gap_count = meta.get('gap_count', 0)
                 mastery = meta.get('mastery', 0.0)
                 hours = meta.get('hours', 1.0)
+                bloom_level = meta.get('bloom_level', 3)
                 
                 priority = compute_priority(gap_count, mastery, hours)
-                heapq.heappush(priority_queue, (-priority, neighbor))
+                heapq.heappush(priority_queue, (-priority, bloom_level, neighbor))
                 
     if len(sorted_order) != len(active_subgraph_nodes):
         raise ValueError("Cycle detected in the active subgraph")

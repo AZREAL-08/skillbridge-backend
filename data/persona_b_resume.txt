@@ -1,15 +1,34 @@
-Warehouse Operations Supervisor with 8 years of progressive experience in logistics and supply chain operations.
+Priya Nair
+priya.nair@gmail.com | +91-9886234510 | linkedin.com/in/priyanair-ops
 
-Core Competencies:
-- Inventory Management: Managed warehouse inventory of 15,000+ SKUs. Conducted weekly cycle counts, maintained 99.2% inventory accuracy. Implemented barcode scanning system that reduced picking errors by 35%.
-- Team Supervision & Leadership: Directly supervised 25 warehouse associates across two shifts. Conducted performance reviews, training sessions, and safety briefings. Promoted three team members to senior roles.
-- Forklift Operations: Certified forklift operator (sit-down, stand-up, and reach trucks). Trained 40+ new operators over career. Zero incidents in personal operating record.
-- OSHA Safety & Compliance: OSHA 30-Hour Certified. Led safety committee that reduced workplace incidents by 45% over two years. Conducted monthly safety audits and created standard operating procedures.
-- Scheduling: Created and managed shift schedules for 25+ staff members. Balanced overtime costs with coverage requirements. Used basic Excel spreadsheets for scheduling.
-- Microsoft Excel: Regular use for tracking metrics, creating schedule templates, and basic reporting. Comfortable with formulas (VLOOKUP, SUMIF) but no pivot tables or advanced analytics.
-- Customer Service: Handled escalated complaints from distribution partners. Maintained 95% satisfaction rating on delivery timeliness metrics.
+EXPERIENCE
 
-Professional History:
-- Warehouse Operations Supervisor, LogiCorp Distribution (2020-present): Manage 50,000 sq ft distribution center. Oversee receiving, storage, picking, and shipping operations.
-- Senior Warehouse Associate, FastShip Logistics (2017-2020): Led a team of 10 on the evening shift. Implemented 5S methodology across the floor.
-- Warehouse Associate, MegaStore Distribution (2016-2017): Picking, packing, and inventory management in a high-volume e-commerce fulfillment center.
+Warehouse Operations Supervisor — Delhivery, Bengaluru (Mar 2020 – Present)
+- Manage day-to-day operations of a 60,000 sq ft sortation facility processing 8,000+ shipments daily
+- Supervise 30 warehouse associates and 4 team leads across morning and night shifts
+- Reduced picking errors by 35% by implementing barcode scanning SOPs adopted across 2 other facilities
+- Maintain 99.1% inventory accuracy across 18,000+ active SKUs using WMS (GreyOrange)
+- Coordinate with procurement team on inbound vendor scheduling; handle escalation calls with 12 supplier contacts
+- Track daily operations metrics in Excel — shipment volumes, SLA adherence, error rates (VLOOKUP, SUMIF, basic charts)
+- No experience with pivot tables, Power BI, or formal data analysis tools
+- Conduct monthly safety audits; OSHA 30-Hour certified; zero LTI incidents in 4 years at this facility
+
+Senior Warehouse Associate — Blue Dart Express, Chennai (Jun 2017 – Feb 2020)
+- Led a team of 10 on the evening shift; implemented 5S methodology across the packing floor
+- Certified forklift operator (sit-down and reach trucks); trained 30+ new operators over tenure
+- First exposure to SAP WM module for goods receipt and inventory transfer orders — data entry level only
+
+Warehouse Associate — Amazon Fulfillment Centre, Chennai (Jan 2016 – May 2017)
+- High-volume picking and packing in e-commerce fulfillment (Prime same-day operations)
+- Learned inventory cycle counting and bin management processes
+
+EDUCATION
+
+Diploma in Logistics & Supply Chain Management — Symbiosis Institute, Pune (2013–2015)
+
+TOOLS & SKILLS
+
+Operations:    Inventory management, shift scheduling, 5S, WMS (GreyOrange), SAP WM (data entry)
+Productivity:  Microsoft Excel (intermediate — formulas, basic charts; no pivot tables or Power BI)
+Compliance:    OSHA 30-Hour Certified, forklift certified (sit-down, reach truck)
+Soft Skills:   Team supervision, vendor escalation handling, cross-shift coordination

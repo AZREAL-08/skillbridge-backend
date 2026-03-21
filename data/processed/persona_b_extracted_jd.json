@@ -1,239 +1,253 @@
 [
   {
-    "taxonomy_id": "KS122QL6NN356RRJT6RV",
+    "taxonomy_id": "ES72D57E1BC4BB22BBB0",
     "taxonomy_source": "emsi",
-    "label": "database design",
+    "label": "supply chain",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS127296VDYS7ZFWVC46",
+    "taxonomy_id": "KS13USA80NE38XJHA2TL",
     "taxonomy_source": "emsi",
-    "label": "node js",
+    "label": "power bi",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "ESAD92AA2437BEF8C136",
+    "taxonomy_id": "ESC36F116973D6535F39",
     "taxonomy_source": "emsi",
-    "label": "express js",
+    "label": "vendor contract",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS122QR6WQ8M7BLY05B3",
+    "taxonomy_id": "ESB4C707E98B551DE4A2",
     "taxonomy_source": "emsi",
-    "label": "database schema",
+    "label": "variance analysis",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS1289Y78X8HDRH2PLM8",
+    "taxonomy_id": "KSCFTLKLB8GE4VIJNVRR",
     "taxonomy_source": "emsi",
-    "label": "query optimization",
+    "label": "vendor management",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS4415B77WWH2WCSVHCV",
+    "taxonomy_id": "KS126406XWQQRBVKGCDW",
     "taxonomy_source": "emsi",
-    "label": "system design",
+    "label": "management contract",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS122J76TK2KYM5FT2F3",
+    "taxonomy_id": "KS122CJ6ZVCCTTDGYB6B",
     "taxonomy_source": "emsi",
-    "label": "design review",
+    "label": "contract negotiation",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS1222B6JMXHTMP5Z46Y",
+    "taxonomy_id": "KS127PG60Y3VLHJZY062",
     "taxonomy_source": "emsi",
-    "label": "code coverage",
+    "label": "performance review",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "ES92C25CB4A4612B2156",
+    "taxonomy_id": "KS125B569R313XT23LHY",
     "taxonomy_source": "emsi",
-    "label": "image optimization",
+    "label": "inventory management",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KSS344MJ1FTC11D417OQ",
+    "taxonomy_id": "KS44077683G0G9XGC4LT",
     "taxonomy_source": "emsi",
-    "label": "api design",
+    "label": "safety stock",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS128D665S69115QGB5J",
+    "taxonomy_id": "KS1202P6CWB7Y5KCB78N",
     "taxonomy_source": "emsi",
-    "label": "rate limit",
+    "label": "abc analysis",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KSDJCA4E89LB98JAZ7LZ",
+    "taxonomy_id": "ESD329DFE7AF20305B61",
     "taxonomy_source": "emsi",
-    "label": "react js",
+    "label": "warehouse operation",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "ESE00213B4D58BD54EC1",
+    "taxonomy_id": "KS681KH79MJLQDPB9T88",
     "taxonomy_source": "emsi",
-    "label": "infrastructure as code",
+    "label": "process improvement",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS1208P6ZMZ4N872Y7X5",
+    "taxonomy_id": "ES750DFF3E0853E95124",
     "taxonomy_source": "emsi",
-    "label": "api",
+    "label": "p&l",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS127115XWT6H93XPX4X",
+    "taxonomy_id": "KS1264K6T7LNRXHBN8JQ",
     "taxonomy_source": "emsi",
-    "label": "soa",
+    "label": "erp",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "ES933D5DCC6C3A7C44D9",
+    "taxonomy_id": "KS440946F27BYQ3ZZ9LC",
     "taxonomy_source": "emsi",
-    "label": "jwt",
+    "label": "scm",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "ESC7869CF7378283E0AA",
+    "taxonomy_id": "KS7G0D05ZQPM0NFXJSBP",
     "taxonomy_source": "emsi",
-    "label": "gcp",
+    "label": "osha",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS440QS66YCBN23Y8K25",
+    "taxonomy_id": "KS126J7645Q7KDHRNHYQ",
     "taxonomy_source": "emsi",
-    "label": "software",
+    "label": "operations manager",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS121XY6VSGJ3Z6J82FQ",
+    "taxonomy_id": "KS440Q1695HNGHGP6T45",
     "taxonomy_source": "emsi",
-    "label": "infrastructure",
+    "label": "social",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS120WT63K4HC6NX7QXV",
+    "taxonomy_id": "KS120GV5ZXR64CJLL1J4",
     "taxonomy_source": "emsi",
-    "label": "banks",
+    "label": "analytics",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS7R8G2D52QH187SED9R",
+    "taxonomy_id": "ES29C56D2465C253FC1D",
     "taxonomy_source": "emsi",
-    "label": "backend",
+    "label": "cross functional",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS1217S6P3M284GY3DLN",
+    "taxonomy_id": "KS123QN6V5SPX8X93DZ3",
     "taxonomy_source": "emsi",
-    "label": "design build",
+    "label": "functional execution",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS125TB6YR6236RKM563",
+    "taxonomy_id": "KS1240H6KF8DFNQDLL3B",
     "taxonomy_source": "emsi",
-    "label": "postgresql",
+    "label": "floor",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KSUS9XM8DSF96YI9S2QY",
+    "taxonomy_id": "KS127D361PF0FTXDZ7C4",
     "taxonomy_source": "emsi",
-    "label": "design query",
+    "label": "operations",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KSP8M654PRZCT7JE9UU6",
+    "taxonomy_id": "KS1218W78FGVPVP2KXPX",
     "taxonomy_source": "emsi",
-    "label": "migration management",
+    "label": "managing managers",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KSY4WFI1S164RQUBSPCC",
+    "taxonomy_id": "KS1218L60PDVZX16NZT1",
     "taxonomy_source": "emsi",
-    "label": "docker",
+    "label": "dashboards",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS124CH623PFBJS8T5KM",
+    "taxonomy_id": "KS124JB619VXG6RQ810C",
     "taxonomy_source": "emsi",
-    "label": "github",
+    "label": "leadership",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS120ST66K9HBSZ7MPS3",
+    "taxonomy_id": "KS441ZD6B2X8GLH30TJJ",
     "taxonomy_source": "emsi",
-    "label": "automated testing",
+    "label": "wms",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS123PN6QLC535X9L625",
+    "taxonomy_id": "ESF586319EAC399E9394",
     "taxonomy_source": "emsi",
-    "label": "event driven",
+    "label": "logistics",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS125CS6L6H5LPLTZG0Q",
+    "taxonomy_id": "KS126X663B21NB77ZHSP",
     "taxonomy_source": "emsi",
-    "label": "architecture standards",
+    "label": "negotiate",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KSSGSFTDVI0J638VZ2RV",
+    "taxonomy_id": "KS127CG7631Y7MD1QPWY",
     "taxonomy_source": "emsi",
-    "label": "cloudwatch",
+    "label": "operations budget",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS128G66RG96FZNHFCXY",
+    "taxonomy_id": "KS441GF6KQ6M65WY8DJ3",
     "taxonomy_source": "emsi",
-    "label": "redis",
+    "label": "track",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS125R96VYB8GM02DSMV",
+    "taxonomy_id": "KS1241P6PXRCKTDSWHTV",
     "taxonomy_source": "emsi",
-    "label": "layers",
+    "label": "forecast",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS7G6NF6D1PXYDWCK4GS",
+    "taxonomy_id": "ES84834128DEDF821260",
     "taxonomy_source": "emsi",
-    "label": "high throughput",
+    "label": "cross functional",
+    "mastery_score": 0.0,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS123MC78KV644P5DDZ0",
+    "taxonomy_source": "emsi",
+    "label": "finance",
+    "mastery_score": 0.0,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS122NY60HCYYDXHQGQN",
+    "taxonomy_source": "emsi",
+    "label": "data entry",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
@@ -245,86 +259,30 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS1226N77K2R22TWDSSP",
+    "taxonomy_id": "KS122TN6QW0F40J15TTM",
     "taxonomy_source": "emsi",
-    "label": "integration tests",
+    "label": "demand forecasting",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS7G0PK5YF5GV85CXJSX",
+    "taxonomy_id": "KS125RV5ZRHFGPJPKD8W",
     "taxonomy_source": "emsi",
-    "label": "indexing",
+    "label": "managing leads",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "ESEB1D4619E6E83A061D",
+    "taxonomy_id": "KS120HK5XY6JV257QLTX",
     "taxonomy_source": "emsi",
-    "label": "plans",
+    "label": "budget",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS121DV68XQ3HX9FLNCW",
+    "taxonomy_id": "ESF32F076B732ADB84C3",
     "taxonomy_source": "emsi",
-    "label": "containerization",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
-    "taxonomy_id": "KS4424T6KPTTQ1NKM0XK",
-    "taxonomy_source": "emsi",
-    "label": "workflows",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
-    "taxonomy_id": "KS124RX787SQ1WVD8XF6",
-    "taxonomy_source": "emsi",
-    "label": "scalable",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
-    "taxonomy_id": "KSZX7YZWNR5IDR1I2VMZ",
-    "taxonomy_source": "emsi",
-    "label": "microservices",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
-    "taxonomy_id": "KS4401V5WX78L6JX0NW7",
-    "taxonomy_source": "emsi",
-    "label": "rest apis",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
-    "taxonomy_id": "ESA91D8112EB9ECA3570",
-    "taxonomy_source": "emsi",
-    "label": "git",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
-    "taxonomy_id": "KSQY249T7UYPLS6LKBP0",
-    "taxonomy_source": "emsi",
-    "label": "rebasing",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
-    "taxonomy_id": "KS441LF7187KS0CV4B6Y",
-    "taxonomy_source": "emsi",
-    "label": "typescript",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
-    "taxonomy_id": "KS441LG5Y8XGW9TP7B4W",
-    "taxonomy_source": "emsi",
-    "label": "typing",
+    "label": "management supplier",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
@@ -336,37 +294,30 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS126HV6CFLVGG8L97CP",
+    "taxonomy_id": "ES6D1654ECE36B3B4E31",
     "taxonomy_source": "emsi",
-    "label": "message queues",
+    "label": "safety certification",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS128BL6BPTLYCNXSGRS",
+    "taxonomy_id": "KS125LS6N7WP4S6SFTCK",
     "taxonomy_source": "emsi",
-    "label": "rabbitmq",
+    "label": "python",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KSUDU9T83UZ7CK5THOYD",
+    "taxonomy_id": "KS440W865GC4VRBW6LJP",
     "taxonomy_source": "emsi",
-    "label": "terraform",
+    "label": "sql",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS441FR6L2YYQLPZBQRC",
+    "taxonomy_id": "KS1205Y6CQ33MDZ4NZMC",
     "taxonomy_source": "emsi",
-    "label": "tooling",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
-    "taxonomy_id": "KS1264M6STJ22H7GCK5N",
-    "taxonomy_source": "emsi",
-    "label": "open source",
+    "label": "ad hoc",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   }
