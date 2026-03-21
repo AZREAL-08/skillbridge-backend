@@ -3,7 +3,7 @@
     "taxonomy_id": "ESD329DFE7AF20305B61",
     "taxonomy_source": "emsi",
     "label": "warehouse operation",
-    "mastery_score": 0.93,
+    "mastery_score": 0.83,
     "confidence_score": 0.7
   },
   {
@@ -31,42 +31,42 @@
     "taxonomy_id": "KS122MP6KKDNSFRC2LXF",
     "taxonomy_source": "emsi",
     "label": "cycle counting",
-    "mastery_score": 0.45,
+    "mastery_score": 0.83,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS126445XGB6QSWCDCY2",
     "taxonomy_source": "emsi",
     "label": "management process",
-    "mastery_score": 0.45,
+    "mastery_score": 0.83,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "ES72D57E1BC4BB22BBB0",
     "taxonomy_source": "emsi",
     "label": "supply chain",
-    "mastery_score": 0.45,
+    "mastery_score": 0.83,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS440C365HRHPM9VQDFF",
     "taxonomy_source": "emsi",
     "label": "supply chain management",
-    "mastery_score": 0.45,
+    "mastery_score": 0.66,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS125B569R313XT23LHY",
     "taxonomy_source": "emsi",
     "label": "inventory management",
-    "mastery_score": 0.45,
+    "mastery_score": 0.95,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS440JW6TG4QMG643GD1",
     "taxonomy_source": "emsi",
     "label": "shift scheduling",
-    "mastery_score": 0.45,
+    "mastery_score": 0.83,
     "confidence_score": 0.7
   },
   {
@@ -87,21 +87,21 @@
     "taxonomy_id": "KS7G0D05ZQPM0NFXJSBP",
     "taxonomy_source": "emsi",
     "label": "osha",
-    "mastery_score": 0.45,
+    "mastery_score": 0.95,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS123PC6DY2MQV0XP43Q",
     "taxonomy_source": "emsi",
     "label": "reach",
-    "mastery_score": 0.45,
+    "mastery_score": 0.95,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS1218W78FGVPVP2KXPX",
     "taxonomy_source": "emsi",
     "label": "manage",
-    "mastery_score": 0.93,
+    "mastery_score": 0.83,
     "confidence_score": 0.7
   },
   {
@@ -122,42 +122,42 @@
     "taxonomy_id": "KS1200Y7541NC9HXS7X5",
     "taxonomy_source": "emsi",
     "label": "barcode",
-    "mastery_score": 0.45,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS441ZD6B2X8GLH30TJJ",
     "taxonomy_source": "emsi",
     "label": "wms",
-    "mastery_score": 0.45,
+    "mastery_score": 0.83,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS7G2F36GFX1K55V6GK4",
     "taxonomy_source": "emsi",
     "label": "coordinate",
-    "mastery_score": 0.45,
+    "mastery_score": 0.83,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS122626T550SLQ7QZ1C",
     "taxonomy_source": "emsi",
     "label": "procurement",
-    "mastery_score": 0.45,
+    "mastery_score": 0.66,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS680KR72KH02C5GM5TY",
     "taxonomy_source": "emsi",
     "label": "scheduling",
-    "mastery_score": 0.45,
+    "mastery_score": 0.83,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS441GF6KQ6M65WY8DJ3",
     "taxonomy_source": "emsi",
     "label": "track",
-    "mastery_score": 0.45,
+    "mastery_score": 0.83,
     "confidence_score": 0.7
   },
   {
@@ -178,7 +178,7 @@
     "taxonomy_id": "ES33A81352FD98757293",
     "taxonomy_source": "emsi",
     "label": "safety audits",
-    "mastery_score": 0.45,
+    "mastery_score": 0.95,
     "confidence_score": 0.7
   },
   {
@@ -192,7 +192,7 @@
     "taxonomy_id": "KS1240H6KF8DFNQDLL3B",
     "taxonomy_source": "emsi",
     "label": "floor",
-    "mastery_score": 0.45,
+    "mastery_score": 0.95,
     "confidence_score": 0.7
   },
   {
@@ -220,14 +220,14 @@
     "taxonomy_id": "ESF586319EAC399E9394",
     "taxonomy_source": "emsi",
     "label": "logistics",
-    "mastery_score": 0.45,
+    "mastery_score": 0.83,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS4414F6H2SWLB7X1HDD",
     "taxonomy_source": "emsi",
     "label": "symbiosis",
-    "mastery_score": 0.45,
+    "mastery_score": 0.83,
     "confidence_score": 0.7
   }
 ]

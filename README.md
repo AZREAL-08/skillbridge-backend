@@ -3,12 +3,13 @@
 This is the FastAPI backend for the SkillBridge AI-adaptive onboarding engine.
 
 ## Features
-- Extracts skills from resume (mocked during development).
-- Computes skill gap against target Job Description.
-- Generates an optimized learning pathway from a course catalog.
-- Uses priority-aware Kahn's algorithm for topological sorting.
-- Provides human-readable reasoning traces.
-- Exports a stable `PipelineState` JSON for frontend rendering.
+- **Real Skill Extraction**: Extracts skills from resume and JD using SkillNER and JobBERT.
+- **LLM-Driven Mastery**: Uses Groq-powered Llama 3 for context-aware mastery scoring (0.0-1.0).
+- **Domain-Aware Gap Analysis**: Computes skill gaps with domain filters (Technical vs. Operations).
+- **Seniority & Negation Detection**: Intelligently handles "8 years experience" boosts and "not production-grade" caps.
+- **Optimized Pathing**: Generates pathways using priority-aware Kahn's algorithm.
+- **Skipped Node Visibility**: Explicitly identifies and shows courses bypassed due to existing mastery.
+- **Stable JSON Interface**: Exports a `PipelineState` JSON for frontend rendering.
 
 ## Tech Stack
 - FastAPI
@@ -75,6 +76,27 @@ uv run python -m experiments.test_kahn
 ```bash
 uv run python -m experiments.test_full_pipeline
 ```
+
+## Testing with Your Own Resume
+
+To test the engine against your own resume and a specific job description:
+
+1. **Prepare your files**: Save your resume and the target job description as plain `.txt` files.
+2. **Configure API Key**: Ensure your `GROQ_API_KEY` is set in the `.env` file.
+3. **Run the Real Pipeline Test**:
+   ```bash
+   uv run python test_real_pipeline.py --resume path/to/resume.txt --jd path/to/jd.txt --domain technical
+   ```
+
+### Command Line Options:
+- `--resume`: (Required) Path to your resume text file.
+- `--jd`: (Required) Path to the job description text file.
+- `--domain`: (Optional) Set to `technical` or `operations` to filter which courses can be assigned.
+
+The script will output a **Full Pathway Report**, including:
+- **Skill Gap**: A list of missing skills identified from the JD.
+- **Recommended Courses**: The optimized learning path to bridge the gap.
+- **Skipped Courses**: Courses you already know that were bypassed (proof of efficiency).
 
 ## Maintenance: Keeping requirements.txt updated
 For legacy compatibility, we keep an exported `requirements.txt`. To update it after changing dependencies in `pyproject.toml`:

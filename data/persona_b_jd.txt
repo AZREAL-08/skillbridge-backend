@@ -30,5 +30,4 @@ Required Skills:
 Nice to Have:
 - OSHA or safety certification background
 - Warehouse operations hands-on experience (strong plus for credibility with floor teams)
-- Familiarity with Python or SQL for ad-hoc data queries
 - Six Sigma Green Belt or equivalent process improvement certification

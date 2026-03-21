@@ -189,7 +189,7 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "ES84834128DEDF821260",
+    "taxonomy_id": "ES29C56D2465C253FC1D",
     "taxonomy_source": "emsi",
     "label": "cross functional",
     "mastery_score": 0.0,
@@ -224,7 +224,7 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "ES29C56D2465C253FC1D",
+    "taxonomy_id": "ES84834128DEDF821260",
     "taxonomy_source": "emsi",
     "label": "cross functional",
     "mastery_score": 0.0,
@@ -245,7 +245,7 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS4412Y5Y0F071NJ6S76",
+    "taxonomy_id": "KS4412X7585VPZP35NM9",
     "taxonomy_source": "emsi",
     "label": "management supplier",
     "mastery_score": 0.0,
@@ -269,27 +269,6 @@
     "taxonomy_id": "KS1240H6KF8DFNQDLL3B",
     "taxonomy_source": "emsi",
     "label": "floor",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
-    "taxonomy_id": "KS125LS6N7WP4S6SFTCK",
-    "taxonomy_source": "emsi",
-    "label": "python",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
-    "taxonomy_id": "KS440W865GC4VRBW6LJP",
-    "taxonomy_source": "emsi",
-    "label": "sql",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
-    "taxonomy_id": "KS1205Y6CQ33MDZ4NZMC",
-    "taxonomy_source": "emsi",
-    "label": "ad hoc",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   }

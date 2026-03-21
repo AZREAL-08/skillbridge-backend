@@ -38,11 +38,21 @@ def regenerate_persona_b_extractions():
     # Show key skills
     power_bi = next((s for s in extracted_resume if "power bi" in s["label"].lower()), None)
     excel = next((s for s in extracted_resume if "excel" in s["label"].lower()), None)
+    inventory = next((s for s in extracted_resume if "inventory management" in s["label"].lower()), None)
+    osha = next((s for s in extracted_resume if "osha" in s["label"].lower()), None)
+    supply_chain = next((s for s in extracted_resume if "supply chain" in s["label"].lower()), None)
+    
     print(f"\nKey Skills:")
     if power_bi:
         print(f"  Power BI: {power_bi['mastery_score']:.2f} (target: <0.50)")
     if excel:
         print(f"  Excel: {excel['mastery_score']:.2f} (target: <0.50)")
+    if inventory:
+        print(f"  Inventory Management: {inventory['mastery_score']:.2f} (target: >0.85)")
+    if osha:
+        print(f"  OSHA: {osha['mastery_score']:.2f} (target: >0.90)")
+    if supply_chain:
+        print(f"  Supply Chain: {supply_chain['mastery_score']:.2f} (target: >0.60)")
     
     # Regenerate JD
     print("\n" + "=" * 80)

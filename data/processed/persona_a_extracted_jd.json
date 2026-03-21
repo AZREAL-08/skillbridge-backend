@@ -294,7 +294,7 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS127BT6L27S2L1NFFXP",
+    "taxonomy_id": "KS126HV6CFLVGG8L97CP",
     "taxonomy_source": "emsi",
     "label": "message queues",
     "mastery_score": 0.0,
@@ -322,7 +322,7 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS1279P6NWS8ZD651971",
+    "taxonomy_id": "KS1279N60JJ2YJ334887",
     "taxonomy_source": "emsi",
     "label": "open source",
     "mastery_score": 0.0,
