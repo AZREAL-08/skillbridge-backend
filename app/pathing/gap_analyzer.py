@@ -8,7 +8,7 @@ Includes noise filtering to remove generic non-skill EMSI IDs from
 JD required skills before gap analysis.
 """
 
-from typing import List, Set, Dict, Any
+from typing import List, Set, Dict, Any, Optional
 import logging
 import networkx as nx
 from app.state import SkillEntry
@@ -90,16 +90,27 @@ def filter_noise_skill_entries(skills: List[dict]) -> List[dict]:
         )
     return filtered
 
+
 def compute_skill_gap(
     extracted_skills: List[SkillEntry], 
     required_skills: List[str],
-    catalog: List[Dict[str, Any]] = None,
-    domain_filter: str = None,
-    jd_skill_entries: List[Any] = None
+    catalog: Optional[List[Dict[str, Any]]] = None,
+    domain_filter: Optional[str] = None
 ) -> List[str]:
     """
     Computes skill gap: required_skills - mastered_skills.
-    Includes an LLM alignment layer mapping synonymous skills between Resume and JD.
+    Only EMSI-mapped skills (taxonomy_source == "emsi") participate in the
+    set intersection. Inferred skills do not drive gap analysis.
+
+    Noise skills are filtered from required_skills before computing the gap.
+    If domain_filter is provided, only skills taught by courses in that domain
+    are considered in the gap.
+
+    :param extracted_skills: Skills from user's resume with mastery scores.
+    :param required_skills: Skills required by the JD (EMSI taxonomy IDs).
+    :param catalog: Full course catalog (needed for domain filtering).
+    :param domain_filter: Optional domain string (e.g. "technical", "operations").
+    :return: List of EMSI taxonomy IDs in the gap.
     """
     clean_required = filter_noise_skills(required_skills)
 
@@ -160,10 +171,16 @@ def get_active_subgraph(
     G: nx.DiGraph, 
     skill_gap: List[str], 
     extracted_skills: List[SkillEntry],
-    domain_filter: str = None
+    domain_filter: Optional[str] = None
 ) -> Dict[str, str]:
     """
     Identifies assigned, prerequisite, and skipped courses.
+    :param G: The full catalog DAG.
+    :param skill_gap: List of EMSI taxonomy IDs in the user's gap.
+    :param extracted_skills: Full list of user's extracted skills.
+    :param domain_filter: Optional domain string (e.g. "technical", "operations").
+    :return: Dictionary mapping course_id to node_state ("assigned", "prerequisite", "skipped").
+    domain_filter: str = None
     """
     gap_set = set(skill_gap)
     mastered_skills = {
