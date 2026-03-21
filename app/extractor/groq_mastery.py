@@ -22,7 +22,8 @@ from groq import Groq
 
 logger = logging.getLogger(__name__)
 
-_GROQ_MODEL = "llama-3.3-70b-versatile"
+# Switched to faster 8b model for simple classification
+_GROQ_MODEL = "llama-3.1-8b-instant"
 _GROQ_CLIENT = None
 
 
@@ -44,6 +45,7 @@ PROFILE_BASE_SCORES: Dict[str, float] = {
     "senior_professional": 0.85,   # 5+ years, leadership roles, production systems
     "mid_professional":    0.70,   # 2-5 years, independent contributor
     "junior_professional": 0.55,   # 0-2 years, some production experience
+    "career_switcher":     0.45,   # meaningful work experience but changing domain/industry
     "hackathon_builder":   0.60,   # student/fresher but ships projects, competitions
     "fresher_academic":    0.35,   # degree only, no meaningful projects
 }
@@ -59,7 +61,6 @@ BLOOM_DECAY: Dict[int, float] = {
 
 MENTION_BOOST: float = 0.15      # Boost for skills explicitly mentioned in resume
 LEADERSHIP_BOOST: float = 0.10   # Boost for skills with leadership/scale signals
-CERTIFICATION_BOOST: float = 0.20 # Boost for certified skills
 NEGATION_CAP: float = 0.45       # Hard cap when negation context detected
 CERTIFICATION_FLOOR: float = 0.90 # Minimum mastery for certified skills
 SENIORITY_FLOOR: float = 0.85     # Minimum mastery for 5+ years / daily core skills
@@ -235,6 +236,7 @@ Categories:
 - "senior_professional": 5+ years experience, led teams, architected production systems, mentored others
 - "mid_professional": 2-5 years experience, independent contributor, shipped to production
 - "junior_professional": 0-2 years professional experience, some real work, entry-level roles
+- "career_switcher": meaningful work experience but changing to a different domain/industry
 - "hackathon_builder": student or fresher who actively ships projects, competes in hackathons, has a portfolio
 - "fresher_academic": degree only, minimal or no projects, no competitions, no work experience
 
@@ -315,10 +317,9 @@ def compute_mastery_scores(
       2. × BLOOM_DECAY[bloom_level] from catalog
       3. + MENTION_BOOST if skill label found in resume
       4. + LEADERSHIP_BOOST if leadership/scale signals found near skill
-      5. + CERTIFICATION_BOOST if certification signals found near skill
-      6. cap at NEGATION_CAP (0.45) if negation phrases found near skill
-      7. apply CERTIFICATION_FLOOR (0.90) or SENIORITY_FLOOR (0.85) if applicable
-      8. clamp to [0.10, 0.95]
+      5. cap at NEGATION_CAP (0.45) if negation phrases found near skill
+      6. apply CERTIFICATION_FLOOR (0.90) or SENIORITY_FLOOR (0.85) if applicable
+      7. clamp to [0.10, 0.95]
     """
     if not mapped_skills:
         return []
@@ -352,14 +353,13 @@ def compute_mastery_scores(
 
         # Check for certification
         has_cert = _detect_certification(label, text_lower)
-        cert_boost = CERTIFICATION_BOOST if has_cert and not is_negated else 0.0
         
         # Check for seniority
         has_seniority = _detect_seniority(label, text_lower)
 
         # Compute mastery
         mastery = _final_mastery(
-            base_score, bloom_level, mention_boost, leadership_boost, cert_boost, 
+            base_score, bloom_level, mention_boost, leadership_boost,
             is_negated, has_cert, has_seniority
         )
 
@@ -369,8 +369,6 @@ def compute_mastery_scores(
             "label": label,
             "mastery_score": mastery,
             "confidence_score": skill.get("confidence_score", 0.5),
-            "profile_type": profile_type,
-            "profile_reasoning": reasoning,
         })
 
         if is_negated:
@@ -383,7 +381,7 @@ def compute_mastery_scores(
             )
         if has_cert:
             logger.debug(
-                "[GroqMastery] CERTIFICATION detected for '%s' — boosted/floored", label
+                "[GroqMastery] CERTIFICATION detected for '%s' — floored", label
             )
         if has_seniority:
             logger.debug(
@@ -432,11 +430,6 @@ def _get_skill_context(label: str, text_lower: str, window: int = 400) -> str:
     Extract the text window surrounding a skill mention in the resume.
     Returns the surrounding context (up to `window` chars on each side).
     Returns empty string if skill not found.
-    
-    Tries multiple strategies:
-      1. Exact label match
-      2. Base word match (first word from multi-word labels)
-      3. Search for comma-separated variations
     """
     label_lower = label.lower().strip()
     if not label_lower:
@@ -453,7 +446,6 @@ def _get_skill_context(label: str, text_lower: str, window: int = 400) -> str:
 
     # Try individual words separated by slashes/dots (e.g., "c++")
     if idx == -1 and ("+" in label_lower or "." in label_lower or "#" in label_lower):
-        # For C++, C#, .NET etc, search for first meaningful part
         search_parts = re.split(r'[+.#]', label_lower)
         for part in search_parts:
             if len(part) >= 3:
@@ -469,20 +461,49 @@ def _get_skill_context(label: str, text_lower: str, window: int = 400) -> str:
     return text_lower[start:end]
 
 
+def _get_sentence_context(label: str, text_lower: str) -> str:
+    """Return the full sentence(s) containing the skill mention."""
+    label_lower = label.lower().strip()
+    if not label_lower:
+        return ""
+
+    idx = text_lower.find(label_lower)
+
+    if idx == -1 and " " in label_lower:
+        base = label_lower.split()[0]
+        if len(base) >= 3:
+            idx = text_lower.find(base)
+
+    if idx == -1 and ("+" in label_lower or "." in label_lower or "#" in label_lower):
+        search_parts = re.split(r'[+.#]', label_lower)
+        for part in search_parts:
+            if len(part) >= 3:
+                idx = text_lower.find(part)
+                if idx != -1:
+                    break
+
+    if idx == -1:
+        return ""
+
+    # Find sentence boundaries
+    start = text_lower.rfind('.', 0, idx)
+    start = start + 1 if start != -1 else 0
+    end = text_lower.find('.', idx)
+    end = end + 1 if end != -1 else len(text_lower)
+    
+    # Include next sentence too
+    end2 = text_lower.find('.', end)
+    end2 = end2 + 1 if end2 != -1 else end
+    
+    return text_lower[start:end2]
+
+
 def _detect_negation_context(label: str, text_lower: str) -> bool:
     """
     Check if a skill is mentioned with negation context in the resume.
-
-    Scans a 60-char window around the skill mention for negation phrases
-    like "not production", "no experience", "basic only", etc.
-    
-    Also checks for negation patterns that may precede the skill mention
-    by looking at the full window (before and after).
-
-    Returns True if negation detected — mastery should be hard-capped.
     """
-    # Reduce window to 60 chars for negation to avoid capturing unrelated "no experience" phrases
-    context = _get_skill_context(label, text_lower, window=60)
+    # Use full sentence context for more reliable negation capture
+    context = _get_sentence_context(label, text_lower)
     if not context:
         return False
 
@@ -495,14 +516,11 @@ def _detect_negation_context(label: str, text_lower: str) -> bool:
             return True
 
     # Additional pattern check: look for "no/never/zero ... [skill]" patterns
-    # This catches cases where negation precedes the skill
     skill_base = label.split()[0].lower() if " " in label else label.lower()
     negation_words = ["no ", "never ", "zero ", "unfamiliar ", "not "]
     
     for neg_word in negation_words:
-        # Look for negation word followed by the skill base word somewhere in context
-        # Using a much smaller max distance (e.g. 30 chars)
-        pattern = f"{neg_word}.{{0,30}}{re.escape(skill_base)}"
+        pattern = f"{neg_word}.{{0,50}}{re.escape(skill_base)}"
         if re.search(pattern, context, re.DOTALL | re.IGNORECASE):
             logger.debug(
                 "[GroqMastery] Negation pattern '%s.*%s' found in '%s'", neg_word, skill_base, label
@@ -515,22 +533,34 @@ def _detect_negation_context(label: str, text_lower: str) -> bool:
 def _detect_leadership_signal(label: str, text_lower: str) -> bool:
     """
     Check if a skill is mentioned alongside leadership/scale signals.
-
-    Scans a 150-char window around the skill mention for patterns like
-    "led team of 5", "50k+ users", "enterprise SaaS", "architected", etc.
-
-    Returns True if leadership signals found — skill gets a +0.10 boost.
+    Applies a tight window for performance/metrics and a loose window for general leadership.
     """
-    context = _get_skill_context(label, text_lower, window=150)
-    if not context:
-        return False
+    tight_context = _get_skill_context(label, text_lower, window=80)
+    loose_context = _get_skill_context(label, text_lower, window=150)
 
-    for pattern in LEADERSHIP_PATTERNS:
-        if re.search(pattern, context, re.IGNORECASE):
-            logger.debug(
-                "[GroqMastery] Leadership signal '%s' found near '%s'", pattern, label
-            )
-            return True
+    TIGHT_PATTERNS = [  
+        r"(?:reduced|decreased|improved|increased)\s+.{0,30}\d+\s*%",
+        r"\d+k\+?\s+(?:users|merchants|customers)",
+        r"\d+\.?\d*m\+?\s+(?:users|merchants|customers)",
+        r"99\.\d+%",
+    ]
+    LOOSE_PATTERNS = [p for p in LEADERSHIP_PATTERNS if p not in TIGHT_PATTERNS]
+
+    if tight_context:
+        for pattern in TIGHT_PATTERNS:
+            if re.search(pattern, tight_context, re.IGNORECASE):
+                logger.debug(
+                    "[GroqMastery] Tight leadership signal '%s' found near '%s'", pattern, label
+                )
+                return True
+
+    if loose_context:
+        for pattern in LOOSE_PATTERNS:
+            if re.search(pattern, loose_context, re.IGNORECASE):
+                logger.debug(
+                    "[GroqMastery] Loose leadership signal '%s' found near '%s'", pattern, label
+                )
+                return True
 
     return False
 
@@ -548,12 +578,9 @@ def _detect_certification(label: str, text_lower: str) -> bool:
 
 def _detect_seniority(label: str, text_lower: str) -> bool:
     """Check for seniority/years-in-role phrases in a larger context."""
-    # Seniority signals like "8 years experience" might be in a header far from the skill
     context = _get_skill_context(label, text_lower, window=600)
     if not context:
-        # If skill not found, check if seniority patterns exist ANYWHERE in resume 
-        # as a fallback if the skill is known to be a core daily driver
-        context = text_lower
+        return False # Fix: DO NOT search the entire resume fallback if context is empty
 
     for pattern in SENIORITY_PATTERNS:
         if re.search(pattern, context, re.IGNORECASE):
@@ -566,7 +593,6 @@ def _final_mastery(
     bloom_level: int,
     mention_boost: float,
     leadership_boost: float,
-    cert_boost: float,
     is_negated: bool,
     has_cert: bool,
     has_seniority: bool,
@@ -582,13 +608,12 @@ def _final_mastery(
       return clamp(raw, 0.10, 0.95)
     """
     decay = BLOOM_DECAY.get(bloom_level, 0.80)
-    raw = (base_score * decay) + mention_boost + leadership_boost + cert_boost
+    raw = (base_score * decay) + mention_boost + leadership_boost
 
     if is_negated:
         raw = min(raw, NEGATION_CAP)
-    
-    # Floors apply only if NOT negated
-    if not is_negated:
+    else:
+        # Floors apply only if NOT negated
         if has_cert:
             raw = max(raw, CERTIFICATION_FLOOR)
         if has_seniority:

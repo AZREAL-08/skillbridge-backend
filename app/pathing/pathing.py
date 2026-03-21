@@ -22,7 +22,8 @@ def add_skipped_nodes(
     Identifies courses that were not in the active subgraph but are mastered
     by the user AND relevant to the JD. These should be shown as 'skipped'.
     """
-    mastered = {s['taxonomy_id'] for s in current_skills if s['mastery_score'] >= MASTERY_THRESHOLD}
+    # Explicit float casting to guarantee strict threshold enforcement
+    mastered = {s['taxonomy_id'] for s in current_skills if float(s.get('mastery_score', 0)) >= MASTERY_THRESHOLD}
     target = set(required_skills)
     assigned_ids = {p['course_id'] for p in final_pathway}
     
@@ -44,8 +45,8 @@ def add_skipped_nodes(
                 c = 0.7
                 for s in current_skills:
                     if s['taxonomy_id'] == tid:
-                        m = s['mastery_score']
-                        c = s['confidence_score']
+                        m = float(s.get('mastery_score', 0))
+                        c = float(s.get('confidence_score', 0.7))
                         break
                 course_masteries.append(m)
                 course_confidences.append(c)
@@ -104,18 +105,18 @@ def run_pipeline(
             m = 0.0
             for s in extracted_skills:
                 if s['taxonomy_id'] == tid:
-                    m = s['mastery_score']
+                    m = float(s.get('mastery_score', 0))
                     break
             masteries.append(m)
         avg_mastery = sum(masteries) / len(masteries) if masteries else 0.0
         
-        # Influence priority with preferences if needed
-        # (For now, just pass through to metadata)
+        # FIXED: Pass bloom_level so kahn_priority_sort can correctly break ties!
         course_metadata[cid] = {
             "prerequisites": meta.get('prerequisites', []),
             "gap_count": gap_count,
             "mastery": avg_mastery,
-            "hours": meta.get('estimated_hours', 1.0)
+            "hours": meta.get('estimated_hours', 1.0),
+            "bloom_level": int(meta.get('bloom_level', 3)) 
         }
         
     # 7. Topological Sort
@@ -140,8 +141,8 @@ def run_pipeline(
             c = 0.5 # Default low confidence if not found
             for s in extracted_skills:
                 if s['taxonomy_id'] == tid:
-                    m = s['mastery_score']
-                    c = s['confidence_score']
+                    m = float(s.get('mastery_score', 0))
+                    c = float(s.get('confidence_score', 0.5))
                     break
             course_masteries.append(m)
             course_confidences.append(c)
