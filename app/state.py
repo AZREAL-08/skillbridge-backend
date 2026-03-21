@@ -56,3 +56,8 @@ class StoredJD(TypedDict):      # NEW in v2.0 (HR Flow)
     raw_text: str
     required_skills: List[SkillEntry]
     created_at: str
+
+class StoredState(TypedDict):   # NEW in v2.0 (Candidate State)
+    state_id: str
+    current: CurrentState
+    created_at: str
