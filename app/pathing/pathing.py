@@ -2,77 +2,91 @@
 Main pathing pipeline — orchestrates extraction, gap analysis, and Kahn sorting.
 """
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import networkx as nx
 from app.state import PipelineState, CurrentState, TargetState, SkillEntry, PathwayCourse, Metrics
 from app.pathing.dag_builder import build_dag
 from app.catalog.loader import load_catalog
-from app.pathing.gap_analyzer import compute_skill_gap, get_active_subgraph
+from app.pathing.gap_analyzer import compute_skill_gap, get_active_subgraph, MASTERY_THRESHOLD
 from app.pathing.kahn import kahn_priority_sort
 from app.pathing.tracer import generate_reasoning_trace
+from app.extractor.extractor import extract_skills, extract_skills_from_jd
 
-def mock_extract_skills(resume_text: str) -> List[SkillEntry]:
+def add_skipped_nodes(
+    final_pathway: List[PathwayCourse], 
+    current_skills: List[SkillEntry], 
+    required_skills: List[str], 
+    catalog: List[Dict[str, Any]]
+) -> List[PathwayCourse]:
     """
-    Mock extraction for development until Person 2 is ready.
-    Provides deterministic data for testing the pathing engine.
+    Identifies courses that were not in the active subgraph but are mastered
+    by the user AND relevant to the JD. These should be shown as 'skipped'.
     """
-    return [
-        {"taxonomy_id": "python-001", "taxonomy_source": "emsi", "label": "Python Programming", "mastery_score": 0.4, "confidence_score": 0.9},
-        {"taxonomy_id": "git-001", "taxonomy_source": "emsi", "label": "Git Version Control", "mastery_score": 0.9, "confidence_score": 0.95},
-        {"taxonomy_id": "sql-001", "taxonomy_source": "emsi", "label": "SQL Database", "mastery_score": 0.2, "confidence_score": 0.8},
-        {"taxonomy_id": "logic-001", "taxonomy_source": "emsi", "label": "Logic", "mastery_score": 0.95, "confidence_score": 0.99},
-        {"taxonomy_id": "db-001", "taxonomy_source": "emsi", "label": "Database Knowledge", "mastery_score": 0.1, "confidence_score": 0.7}
-    ]
+    mastered = {s['taxonomy_id'] for s in current_skills if s['mastery_score'] >= MASTERY_THRESHOLD}
+    target = set(required_skills)
+    assigned_ids = {p['course_id'] for p in final_pathway}
+    
+    new_pathway = list(final_pathway)
+    
+    for course in catalog:
+        cid = course['course_id']
+        if cid in assigned_ids:
+            continue
+            
+        # Course teaches something the JD needs AND user has mastered
+        taught = set(course.get('skills_taught', []))
+        if taught.intersection(mastered) and taught.intersection(target):
+            # Calculate average mastery and confidence for this course
+            course_masteries = []
+            course_confidences = []
+            for tid in taught:
+                m = 0.0
+                c = 0.7
+                for s in current_skills:
+                    if s['taxonomy_id'] == tid:
+                        m = s['mastery_score']
+                        c = s['confidence_score']
+                        break
+                course_masteries.append(m)
+                course_confidences.append(c)
+                
+            avg_mastery = sum(course_masteries) / len(course_masteries) if course_masteries else 0.0
+            avg_confidence = sum(course_confidences) / len(course_confidences) if course_confidences else 0.7
+            
+            new_pathway.append({
+                "course_id": cid,
+                "node_state": "skipped",
+                "mastery_score": avg_mastery,
+                "confidence_score": avg_confidence
+            })
+            
+    return new_pathway
 
-def run_pipeline(resume_text: str, jd_text: str) -> PipelineState:
+def run_pipeline(
+    resume_text: str, 
+    jd_text: str, 
+    preferences: Optional[Dict[str, Any]] = None,
+    domain_filter: Optional[str] = None
+) -> PipelineState:
     """
     Full pipeline: extract_skills → compute_gap → run_kahn → generate_traces
     """
     # 1. Load catalog and build DAG
     catalog = load_catalog()
-    # For dev, if catalog is empty, use a tiny mock catalog
-    if not catalog:
-        catalog = [
-            {
-                "course_id": "C-PY-101", "title": "Intro to Python", 
-                "skills_taught": ["python-001"], "prerequisites": ["C-PY-000"], 
-                "estimated_hours": 10.0, "difficulty": "Beginner", "domain": "Tech"
-            },
-            {
-                "course_id": "C-PY-000", "title": "Programming Basics", 
-                "skills_taught": ["logic-001"], "prerequisites": [], 
-                "estimated_hours": 5.0, "difficulty": "Beginner", "domain": "Tech"
-            },
-            {
-                "course_id": "C-SQL-101", "title": "SQL Basics", 
-                "skills_taught": ["sql-001"], "prerequisites": ["C-DB-000"], 
-                "estimated_hours": 5.0, "difficulty": "Beginner", "domain": "Data"
-            },
-            {
-                "course_id": "C-DB-000", "title": "Database Fundamentals", 
-                "skills_taught": ["db-001"], "prerequisites": [], 
-                "estimated_hours": 2.0, "difficulty": "Beginner", "domain": "Data"
-            },
-            {
-                "course_id": "C-GIT-101", "title": "Git for Pros", 
-                "skills_taught": ["git-001"], "prerequisites": [], 
-                "estimated_hours": 2.0, "difficulty": "Beginner", "domain": "Tech"
-            }
-        ]
     G = build_dag(catalog)
     
-    # 2. Extract skills (Mocked for now)
-    extracted_skills = mock_extract_skills(resume_text)
+    # 2. Extract skills from Resume (Real Extraction)
+    extracted_skills = extract_skills(resume_text, catalog)
     
-    # 3. Target skills (Mocked: JD requires Python, SQL, and Git)
-    # In real implementation, this would come from an extractor for JD text.
-    required_skills = ["python-001", "sql-001", "git-001"]
+    # 3. Extract skills from JD (Real Extraction)
+    target_skill_entries = extract_skills_from_jd(jd_text)
+    required_skills = [s['taxonomy_id'] for s in target_skill_entries if s.get('taxonomy_source') == 'emsi']
     
     # 4. Compute gap
-    skill_gap = compute_skill_gap(extracted_skills, required_skills)
+    skill_gap = compute_skill_gap(extracted_skills, required_skills, catalog, domain_filter)
     
     # 5. Identify active subgraph
-    node_states = get_active_subgraph(G, skill_gap, extracted_skills)
+    node_states = get_active_subgraph(G, skill_gap, extracted_skills, domain_filter)
     active_node_ids = list(node_states.keys())
     
     # 6. Precompute metadata for Kahn sort
@@ -85,7 +99,6 @@ def run_pipeline(resume_text: str, jd_text: str) -> PipelineState:
         gap_count = len([s for s in taught if s in gap_set])
         
         # Mastery of skills taught by this course
-        # If multiple skills, we take average for priority purposes
         masteries = []
         for tid in taught:
             m = 0.0
@@ -96,6 +109,8 @@ def run_pipeline(resume_text: str, jd_text: str) -> PipelineState:
             masteries.append(m)
         avg_mastery = sum(masteries) / len(masteries) if masteries else 0.0
         
+        # Influence priority with preferences if needed
+        # (For now, just pass through to metadata)
         course_metadata[cid] = {
             "prerequisites": meta.get('prerequisites', []),
             "gap_count": gap_count,
@@ -156,8 +171,11 @@ def run_pipeline(resume_text: str, jd_text: str) -> PipelineState:
             )
             reasoning_traces.append(trace)
             
+    # 8.5 Add Skipped Nodes that weren't in the active subgraph
+    final_pathway = add_skipped_nodes(final_pathway, extracted_skills, required_skills, catalog)
+    
     # 9. Compute Metrics
-    baseline_courses = max(len(catalog), 30) # PDF says "Always 30 (len of catalog)"
+    baseline_courses = max(len(catalog), 30) # Always 30 (len of catalog)
     reduction_pct = 0.0
     if baseline_courses > 0:
         reduction_pct = ((baseline_courses - assigned_count) / baseline_courses) * 100

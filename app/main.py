@@ -4,6 +4,7 @@ Implements both HR Admin and Candidate flows.
 """
 
 import uuid
+import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from fastapi import FastAPI, HTTPException
@@ -14,10 +15,14 @@ from pydantic import BaseModel
 from app.state import SkillEntry, StoredJD, PipelineState, CurrentState, TargetState, Question
 
 # --- Track 2: Extractor ---
-from app.extractor.extractor import extract_skills
+from app.extractor.extractor import extract_skills, extract_skills_from_jd
 
-# --- Track 3: Pathing (To be integrated by your friend) ---
-# from app.pathing.pathing import run_pipeline 
+# --- Track 3: Pathing ---
+from app.pathing.pathing import run_pipeline 
+from app.pathing.gap_analyzer import compute_skill_gap
+from app.catalog.loader import load_catalog
+
+logger = logging.getLogger(__name__)
 
 # ===========================================================================
 # Hackathon Persistence (In-Memory Databases)
@@ -86,12 +91,7 @@ async def upload_jd(request: JDUploadRequest):
     Runs extraction on JD text. 
     Per Blueprint v2.0, mastery step is skipped for JDs (forced to 0.0).
     """
-    draft_skills = extract_skills(request.raw_text)
-    
-    # Force mastery to 0.0 because this is a target requirement, not a user profile
-    for skill in draft_skills:
-        skill["mastery_score"] = 0.0
-        
+    draft_skills = extract_skills_from_jd(request.raw_text)
     return {"draft_skills": draft_skills}
 
 @app.post("/api/jd/confirm")
@@ -133,7 +133,8 @@ async def list_jds():
 @app.post("/api/resume/upload")
 async def upload_resume(request: ResumeUploadRequest):
     """Runs full Track 2 pipeline (including Groq mastery scoring)."""
-    extracted_skills = extract_skills(request.raw_text)
+    catalog = load_catalog()
+    extracted_skills = extract_skills(request.raw_text, catalog)
     return {"extracted_skills": extracted_skills}
 
 @app.post("/api/resume/confirm")
@@ -162,8 +163,21 @@ async def generate_questions(request: PathwayQuestionsRequest):
     if request.jd_id not in DB_JDS:
         raise HTTPException(status_code=404, detail="JD not found")
 
-    # Mock questions to unblock the frontend until Track 3 finishes gap logic
-    mock_questions: List[Question] = [
+    current_state = DB_SESSIONS[request.current_state_id]
+    target_jd = DB_JDS[request.jd_id]
+    catalog = load_catalog()
+
+    # 1. Compute Gap to drive dynamic questions
+    required_ids = [s["taxonomy_id"] for s in target_jd["required_skills"]]
+    gap_ids = compute_skill_gap(
+        current_state["extracted_skills"], 
+        required_ids, 
+        catalog, 
+        target_jd["domain"]
+    )
+
+    # 2. Baseline Questions
+    questions: List[Question] = [
         {
             "id": "weekly_hours",
             "text": "How much time can you dedicate to learning per week?",
@@ -175,7 +189,25 @@ async def generate_questions(request: PathwayQuestionsRequest):
             "options": ["Hands-on projects", "Structured reading", "Video lectures"]
         }
     ]
-    return {"questions": mock_questions}
+
+    # 3. Dynamic Domain-Specific Questions
+    # If the gap contains technical skills, ask about environment
+    if target_jd["domain"] == "technical" and len(gap_ids) > 0:
+        questions.append({
+            "id": "preferred_os",
+            "text": "Which development environment do you prefer for hands-on modules?",
+            "options": ["Linux/Unix", "Windows (WSL)", "Cloud-based IDE"]
+        })
+    
+    # If it's operations and has a gap, ask about tool preference
+    if target_jd["domain"] == "operations" and len(gap_ids) > 0:
+        questions.append({
+            "id": "tool_preference",
+            "text": "For supply chain modules, which ERP interface are you most familiar with?",
+            "options": ["SAP", "Oracle", "No preference"]
+        })
+
+    return {"questions": questions}
 
 @app.post("/api/pathway/generate")
 async def generate_pathway(request: PathwayGenerateRequest):
@@ -190,25 +222,18 @@ async def generate_pathway(request: PathwayGenerateRequest):
     current_state = DB_SESSIONS[request.current_state_id]
     target_jd = DB_JDS[request.jd_id]
 
-    target_state: TargetState = {
-        "raw_jd_text": target_jd["raw_text"],
-        "required_skills": [skill["taxonomy_id"] for skill in target_jd["required_skills"]]
-    }
-
-    # ---------------------------------------------------------
-    # ⚠️ TRACK 3 HANDOFF POINT ⚠️
-    # Once your friend finishes pathing.py, uncomment this:
-    # 
-    # result = run_pipeline(
-    #     current_state=current_state,
-    #     target_state=target_state,
-    #     preferences=request.preferences,
-    #     domain_filter=target_jd["domain"] # New P0 Fix
-    # )
-    # return result
-    # ---------------------------------------------------------
-    
-    return {"status": "Waiting on Track 3 Algorithm Integration"}
+    try:
+        # Run the full pipeline
+        result = run_pipeline(
+            resume_text=current_state["raw_resume_text"],
+            jd_text=target_jd["raw_text"],
+            preferences=request.preferences,
+            domain_filter=target_jd["domain"]
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Pathway generation failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
