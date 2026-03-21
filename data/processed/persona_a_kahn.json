@@ -1,0 +1,45 @@
+{
+  "input_diff_file": "/mnt/extra-maal/skillbridge-backend/data/processed/persona_a_diff_output.json",
+  "active_node_ids": [
+    "TECH-401",
+    "TECH-104",
+    "TECH-301",
+    "TECH-302",
+    "TECH-407",
+    "TECH-403",
+    "TECH-304",
+    "TECH-303",
+    "TECH-102",
+    "TECH-404",
+    "TECH-405",
+    "TECH-305"
+  ],
+  "node_states": {
+    "TECH-401": "assigned",
+    "TECH-104": "skipped",
+    "TECH-301": "skipped",
+    "TECH-302": "assigned",
+    "TECH-407": "assigned",
+    "TECH-403": "assigned",
+    "TECH-304": "assigned",
+    "TECH-303": "prerequisite",
+    "TECH-102": "skipped",
+    "TECH-404": "assigned",
+    "TECH-405": "assigned",
+    "TECH-305": "assigned"
+  },
+  "kahn_order": [
+    "TECH-102",
+    "TECH-104",
+    "TECH-301",
+    "TECH-401",
+    "TECH-302",
+    "TECH-303",
+    "TECH-405",
+    "TECH-304",
+    "TECH-305",
+    "TECH-403",
+    "TECH-407",
+    "TECH-404"
+  ]
+}

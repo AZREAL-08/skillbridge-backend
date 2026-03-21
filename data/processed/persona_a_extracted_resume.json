@@ -343,7 +343,7 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS4420K676H1NVK75D94",
+    "taxonomy_id": "KS124TQ5ZQ3JY89WBZQ8",
     "taxonomy_source": "emsi",
     "label": "databases sql",
     "mastery_score": 0.45,
@@ -371,9 +371,9 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS7G6XM6NHD5NMYBXMHK",
+    "taxonomy_id": "KS126H56LT9GNSVJTMQ5",
     "taxonomy_source": "emsi",
-    "label": "scrum scrum master certified",
+    "label": "master certified",
     "mastery_score": 0.95,
     "confidence_score": 0.7
   }
