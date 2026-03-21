@@ -36,6 +36,18 @@ _nlp      : Optional[spacy.Language] = None
 # Suffixes that SkillNER appends to skill IDs for different match types
 _SKILL_ID_SUFFIXES = ("_fullUni", "_lowSurf", "_oneToken")
 
+# Company names and proper nouns that commonly appear in resumes/JDs
+# These should be excluded from skill extraction to avoid false positives
+_COMPANY_NAMES_KEYWORDS = {
+    "blue dart", "samsung", "google", "amazon", "microsoft", "apple",
+    "ibm", "oracle", "salesforce", "github", "gitlab", "jira",
+    "atlassian", "netflix", "uber", "lyft", "airbnb", "tesla",
+    "accenture", "cognizant", "infosys", "tata", "wipro", "hcl",
+    "cisco", "vmware", "dell", "hp", "lenovo", "intel", "nvidia",
+    "qualcomm", "broadcom", "amd", "arm", "qualcomm", "analog",
+    "texas instruments", "stm microelectronics", "nxp",
+}
+
 
 def _get_extractor() -> SkillExtractor:
     """
@@ -51,6 +63,52 @@ def _get_extractor() -> SkillExtractor:
         _extractor = SkillExtractor(_nlp, SKILL_DB, PhraseMatcher)
         logger.info("[SkillNER] Ready.")
     return _extractor
+
+
+def _is_part_of_company_name(label: str, context_text: str) -> bool:
+    """
+    Check if a skill label is part of a company/proper noun in the context.
+    
+    For example, "dart" in "Blue Dart Express" should be filtered out.
+    
+    Args:
+        label: The skill label to check (e.g., "dart").
+        context_text: The surrounding text from the resume/JD.
+        
+    Returns:
+        True if the label appears to be part of a company name, False otherwise.
+    """
+    label_lower = label.lower().strip()
+    context_lower = context_text.lower()
+    
+    # Check if label appears in any company name
+    for company in _COMPANY_NAMES_KEYWORDS:
+        if label_lower in company and company in context_lower:
+            logger.debug("[SkillNER] Filtered '%s' — detected as part of company name '%s'",
+                        label, company)
+            return True
+    
+    # Check for common company name patterns around the match
+    # e.g., "Blue Dart" pattern with capitalized proper nouns
+    idx = context_lower.find(label_lower)
+    if idx >= 0:
+        # Look at surrounding context (30 chars before and after)
+        start = max(0, idx - 30)
+        end = min(len(context_text), idx + len(label_lower) + 30)
+        surrounding = context_text[start:end]
+        
+        # If surrounded by capitalized words, likely a proper noun
+        # Simple heuristic: look for "Word Label Express" pattern
+        words_before = surrounding[:surrounding.lower().find(label_lower)].split()
+        words_after = surrounding[surrounding.lower().find(label_lower) + len(label_lower):].split()
+        
+        # If there are capitalized words directly adjacent, it might be a company name
+        if words_before and words_before[-1] and words_before[-1][0].isupper():
+            if words_after and words_after[0] and words_after[0][0].isupper():
+                logger.debug("[SkillNER] Filtered '%s' — appears in proper noun pattern", label)
+                return True
+    
+    return False
 
 
 def _clean_skill_id(raw_id: str) -> str:
@@ -70,6 +128,8 @@ def extract_explicit_skills(text: str) -> List[Dict[str, str]]:
 
     Parses both 'full_matches' (exact phrase matches) and 'ngram_scored'
     (surface-form n-gram matches) from SkillNER's annotation output.
+    
+    Filters out skills that appear to be part of company names or proper nouns.
 
     Args:
         text: Raw resume or profile text string.
@@ -99,11 +159,11 @@ def extract_explicit_skills(text: str) -> List[Dict[str, str]]:
 
         # Process full_matches first — highest precision
         for match in results.get("full_matches", []):
-            _add_skill(match, seen, skills, source="full_matches")
+            _add_skill(match, seen, skills, source="full_matches", context_text=text)
 
         # Process ngram_scored — broader recall
         for match in results.get("ngram_scored", []):
-            _add_skill(match, seen, skills, source="ngram_scored")
+            _add_skill(match, seen, skills, source="ngram_scored", context_text=text)
 
         logger.info("[SkillNER] Extracted %d unique skills from text.", len(skills))
         return skills
@@ -222,11 +282,14 @@ def _add_skill(
     match : dict,
     seen  : set,
     skills: List[Dict[str, str]],
-    source: str
+    source: str,
+    context_text: str = ""
 ) -> None:
     """
     Extract the EMSI skill_id and doc_node_value from a match entry and
     add it to the deduplicated skills list.
+    
+    Filters out skills that appear to be part of company names.
 
     INTENTIONALLY ignores 'score' and 'len' — both are np.int64 and
     will cause json.dumps() to raise TypeError downstream.
@@ -235,6 +298,11 @@ def _add_skill(
     label    = _extract_label(match, skill_id)
 
     if not skill_id or not label:
+        return
+    
+    # Filter out skills that are part of company names
+    if context_text and _is_part_of_company_name(label, context_text):
+        logger.debug("[SkillNER] Filtered skill '%s' — appears in company name", label)
         return
 
     if skill_id not in seen:

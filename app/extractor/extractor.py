@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Dict, List, Set
 
 from app.extractor.schemas       import SkillEntry
@@ -73,11 +74,65 @@ def extract_skills(raw_text: str, catalog: List[dict] = None) -> List[SkillEntry
     return _cast_to_skill_entries(scored_skills)
 
 
+def _extract_requirements_section(raw_text: str) -> str:
+    """
+    Extract the "Required Skills" or "Responsibilities" section from a JD.
+    
+    This avoids extracting skills from company description, benefits text, etc.
+    Only returns text after common section headers like:
+      - "Required Skills:"
+      - "Required Qualifications:"
+      - "Key Responsibilities:"
+      - "Responsibilities and Qualifications:"
+    
+    If no such header is found, returns the full text (fallback).
+    
+    Args:
+        raw_text: Full job description text.
+        
+    Returns:
+        Text from the requirements section onward (or full text if no section found).
+    """
+    if not raw_text:
+        return ""
+    
+    # Common section headers for requirements/skills/responsibilities
+    headers = [
+        r"(?:^|\n)\s*(?:required\s+)?(?:skills|qualifications|competencies)",
+        r"(?:^|\n)\s*(?:key\s+)?(?:responsibilities|responsibilities\s+and\s+qualifications)",
+        r"(?:^|\n)\s*what\s+we(?:(?:'|&#39;)re\s+)?(?:looking|seeking)\s+for",
+        r"(?:^|\n)\s*(?:essential|must-have|core)\s+(?:skills|qualities)",
+        r"(?:^|\n)\s*experience\s+(?:required|needed)",
+    ]
+    
+    text_lower = raw_text.lower()
+    earliest_idx = len(raw_text)
+    
+    # Find the earliest section header
+    for header_pattern in headers:
+        match = re.search(header_pattern, raw_text, re.IGNORECASE | re.MULTILINE)
+        if match:
+            earliest_idx = min(earliest_idx, match.start())
+    
+    # If a header was found, extract everything from that point onward
+    if earliest_idx < len(raw_text):
+        # Return text starting from the header
+        section_text = raw_text[earliest_idx:]
+        logger.info("[Orchestrator] Extracted requirements section (%d chars from %d total)",
+                   len(section_text), len(raw_text))
+        return section_text
+    
+    # Fallback: use full text if no section header found
+    logger.debug("[Orchestrator] No requirements section header found, using full JD text")
+    return raw_text
+
+
 def extract_skills_from_jd(raw_text: str) -> List[SkillEntry]:
     """
     Extraction pipeline for JD (job description) text.
 
     JDs don't have mastery — they have requirements. This pipeline:
+      0. Extract the "Required Skills" section (skip company description)
       1. SkillNER explicit extraction
       2. JobBERT implicit extraction
       3. Merge & deduplicate
@@ -93,17 +148,20 @@ def extract_skills_from_jd(raw_text: str) -> List[SkillEntry]:
 
     logger.info("[Orchestrator] Starting skill extraction pipeline (JD mode — no mastery).")
 
+    # ── Stage 0: Extract requirements section to avoid company description ───
+    jd_requirements = _extract_requirements_section(raw_text)
+
     # ── Stage 1: Explicit extraction (SkillNER → EMSI IDs) ───────────────────
     explicit_skills: List[dict] = []
     try:
-        explicit_skills = extract_explicit_skills(raw_text)
+        explicit_skills = extract_explicit_skills(jd_requirements)
     except Exception as exc:
         logger.error("[Orchestrator] Stage 1 (JD) failed: %s", exc)
 
     # ── Stage 2: Implicit extraction (JobBERT → EMSI map / inferred) ─────────
     implicit_skills: List[dict] = []
     try:
-        implicit_skills = extract_implicit_skills(raw_text)
+        implicit_skills = extract_implicit_skills(jd_requirements)
     except Exception as exc:
         logger.error("[Orchestrator] Stage 2 (JD) failed: %s", exc)
 

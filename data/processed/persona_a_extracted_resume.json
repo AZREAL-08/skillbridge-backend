@@ -3,14 +3,14 @@
     "taxonomy_id": "KS1222G6RD9GBB7Q6FY5",
     "taxonomy_source": "emsi",
     "label": "code review",
-    "mastery_score": 0.83,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS127JN6PW8M653Y85DV",
     "taxonomy_source": "emsi",
     "label": "pair programming",
-    "mastery_score": 0.83,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
@@ -66,14 +66,14 @@
     "taxonomy_id": "KS7G7K873Z87GNGYHQKB",
     "taxonomy_source": "emsi",
     "label": "com",
-    "mastery_score": 0.83,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS1208P6ZMZ4N872Y7X5",
     "taxonomy_source": "emsi",
     "label": "api",
-    "mastery_score": 0.83,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
@@ -91,87 +91,80 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS124CH623PFBJS8T5KM",
-    "taxonomy_source": "emsi",
-    "label": "github",
-    "mastery_score": 0.83,
-    "confidence_score": 0.7
-  },
-  {
     "taxonomy_id": "KS1218L60PDVZX16NZT1",
     "taxonomy_source": "emsi",
     "label": "dashboard",
-    "mastery_score": 0.83,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KSDJCA4E89LB98JAZ7LZ",
     "taxonomy_source": "emsi",
     "label": "react",
-    "mastery_score": 0.83,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KSOJDFKU3P4CQ25VCU4T",
     "taxonomy_source": "emsi",
     "label": "codebase",
-    "mastery_score": 0.83,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS441VN5WWD352RVMMF4",
     "taxonomy_source": "emsi",
     "label": "component library",
-    "mastery_score": 0.83,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS1256Z6HDJ91HWJ615M",
     "taxonomy_source": "emsi",
     "label": "product teams",
-    "mastery_score": 0.83,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS1218W78FGVPVP2KXPX",
     "taxonomy_source": "emsi",
     "label": "managed",
-    "mastery_score": 0.83,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS1264P61XQRRF418G50",
     "taxonomy_source": "emsi",
     "label": "scale",
-    "mastery_score": 0.83,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KSQOOX1S2DYD0E1VVZ5X",
     "taxonomy_source": "emsi",
     "label": "redux",
-    "mastery_score": 0.83,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS441FR73SLYXXH6GRSD",
     "taxonomy_source": "emsi",
     "label": "toolkit",
-    "mastery_score": 0.83,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS7AASDV6UOE7VFBGF4D",
     "taxonomy_source": "emsi",
     "label": "collaborated",
-    "mastery_score": 0.83,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS7R8G2D52QH187SED9R",
     "taxonomy_source": "emsi",
     "label": "backend",
-    "mastery_score": 0.83,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
@@ -185,28 +178,28 @@
     "taxonomy_id": "KS7YXWLEAKN8QOFDFVS2",
     "taxonomy_source": "emsi",
     "label": "postman",
-    "mastery_score": 0.83,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KSNN1KZQTC3W3G9J42QL",
     "taxonomy_source": "emsi",
     "label": "openapi",
-    "mastery_score": 0.83,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS122ST73WCRJL0KR08F",
     "taxonomy_source": "emsi",
     "label": "dec",
-    "mastery_score": 0.83,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KSMASS2Q953B0ACFG02Q",
     "taxonomy_source": "emsi",
     "label": "freshdesk",
-    "mastery_score": 0.83,
+    "mastery_score": 0.93,
     "confidence_score": 0.7
   },
   {
@@ -301,13 +294,6 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "ESA91D8112EB9ECA3570",
-    "taxonomy_source": "emsi",
-    "label": "git",
-    "mastery_score": 0.95,
-    "confidence_score": 0.7
-  },
-  {
     "taxonomy_id": "KS4424T6KPTTQ1NKM0XK",
     "taxonomy_source": "emsi",
     "label": "workflows",
@@ -343,13 +329,6 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "ES5269FD2583B0B9875C",
-    "taxonomy_source": "emsi",
-    "label": "figma",
-    "mastery_score": 0.83,
-    "confidence_score": 0.7
-  },
-  {
     "taxonomy_id": "KS1H7C2ZC7LXQQ6UN22I",
     "taxonomy_source": "emsi",
     "label": "firebase",
@@ -381,21 +360,21 @@
     "taxonomy_id": "KS3EP9CXRSFB1XIK8GDP",
     "taxonomy_source": "emsi",
     "label": "swagger",
-    "mastery_score": 0.83,
+    "mastery_score": 0.45,
     "confidence_score": 0.7
   },
   {
     "taxonomy_id": "KS120BC6BLYD8GXK5DSW",
     "taxonomy_source": "emsi",
     "label": "agile",
-    "mastery_score": 0.83,
+    "mastery_score": 0.45,
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS440PD6XYJ99VN07YQM",
+    "taxonomy_id": "KS1266D6KM3WY19MJR90",
     "taxonomy_source": "emsi",
     "label": "master certified",
-    "mastery_score": 0.83,
+    "mastery_score": 0.45,
     "confidence_score": 0.7
   }
 ]

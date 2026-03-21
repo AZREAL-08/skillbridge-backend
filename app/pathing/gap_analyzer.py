@@ -24,6 +24,7 @@ MASTERY_THRESHOLD = 0.85
 # course routing. This list was curated from observed false positives.
 
 NOISE_TAXONOMY_IDS: Set[str] = {
+    # Generic verbs/adjectives/nouns — not real skills
     "KS4425C7820LCHZS7VGX",  # "write"
     "KS4400B70JFSWXTYH0P2",  # "nice"
     "KS124RX787SQ1WVD8XF6",  # "scalable"
@@ -33,7 +34,7 @@ NOISE_TAXONOMY_IDS: Set[str] = {
     "KS7R8G2D52QH187SED9R",  # "backend"
     "KS440QS66YCBN23Y8K25",  # "software"
     "ES76F4C57A88877D6D64",  # "professional"
-    "KS4424T6KPTTQ1NKM0XK",  # "workflow"
+    "KS4424T6KPTTQ1NKM0XK",  # "workflow" / "workflows"
     "KS125R96VYB8GM02DSMV",  # "layers"
     "KS440H66BML35BBRFCTK",  # "server side"
     "KS1227V6GK3GDKLR52KN",  # "rendering"
@@ -46,6 +47,47 @@ NOISE_TAXONOMY_IDS: Set[str] = {
     "ESC67B4D284220100378",  # "web app"
     "KS2UJ31ABTM22Y2MHEQM",  # "custom component"
     "KS1228S6YKWXMH4M4DL7",  # "conflict resolution"
+    # Additional multi-word noise from JD extraction
+    "KS120WT63K4HC6NX7QXV",  # "banks"
+    "ESEB1D4619E6E83A061D",  # "plans"
+    "KS1240H6KF8DFNQDLL3B",  # "floor"
+    "KS441GF6KQ6M65WY8DJ3",  # "track"
+    "KS1217S6P3M284GY3DLN",  # "design build"
+    "KS7G6NF6D1PXYDWCK4GS",  # "high throughput"
+    "KS125CS6L6H5LPLTZG0Q",  # "architecture standards"
+    "KS122J76TK2KYM5FT2F3",  # "design review"
+    "KS123QN6V5SPX8X93DZ3",  # "functional execution"
+    "KS441FR6L2YYQLPZBQRC",  # "tooling"
+    "KS1264M6STJ22H7GCK5N",  # "open source"
+    "KS441LG5Y8XGW9TP7B4W",  # "typing"
+    "KS127115XWT6H93XPX4X",  # "soa"
+    "KSUS9XM8DSF96YI9S2QY",  # "design query"
+    "KS127D361PF0FTXDZ7C4",  # "operations" (generic)
+    "KS126J7645Q7KDHRNHYQ",  # "operations manager" (title, not skill)
+    "KS440Q1695HNGHGP6T45",  # "social"
+    "KS125RV5ZRHFGPJPKD8W",  # "managing leads"
+    "KS1205Y6CQ33MDZ4NZMC",  # "ad hoc"
+}
+
+# Labels to filter — catches noise that may have varying EMSI IDs
+NOISE_LABELS: Set[str] = {
+    "write", "nice", "scalable", "manage", "software", "backend",
+    "professional", "workflow", "workflows", "layers", "rendering",
+    "libraries", "load time", "semantic", "product teams", "integration",
+    "banks", "plans", "floor", "track", "design build", "high throughput",
+    "architecture standards", "design review", "functional execution",
+    "tooling", "open source", "typing", "soa", "design query",
+    "operations", "operations manager", "social", "managing leads",
+    "ad hoc", "com", "dec", "read", "scale", "managed", "collaborated",
+    "layer", "integrated", "reach", "supervise", "coordinate",
+    "certify forklift operator", "symbiosis", "lti", "dart",
+    # Additional noise from analysis
+    "image optimization", "collaborate", "cross functional",
+    "full stack", "multi threaded", "test", "database", "cloud",
+    "api endpoint", "ui ux", "frontend", "mobile", "web",
+    # Generic business terms
+    "budget", "revenue", "marketing", "sales", "customer service",
+    "analysis", "team leader", "manager", "supervisor",
 }
 
 
@@ -60,6 +102,31 @@ def filter_noise_skills(skill_ids: List[str]) -> List[str]:
         logger.info(
             "[GapAnalyzer] Filtered %d noise skills from %d total (kept %d).",
             removed, len(skill_ids), len(filtered),
+        )
+    return filtered
+
+
+def filter_noise_skill_entries(skills: List[dict]) -> List[dict]:
+    """
+    Remove noise skills from a list of extracted SkillEntry dicts.
+    Filters by both taxonomy_id and label to catch noise from multiple angles.
+    
+    Args:
+        skills: List of skill dicts with 'taxonomy_id' and 'label' fields.
+        
+    Returns:
+        Filtered list with noise skills removed.
+    """
+    filtered = [
+        s for s in skills
+        if s.get("taxonomy_id", "") not in NOISE_TAXONOMY_IDS
+        and s.get("label", "").lower() not in NOISE_LABELS
+    ]
+    removed = len(skills) - len(filtered)
+    if removed > 0:
+        logger.info(
+            "[GapAnalyzer] Filtered %d noise skills from %d total (kept %d).",
+            removed, len(skills), len(filtered),
         )
     return filtered
 

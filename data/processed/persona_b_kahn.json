@@ -1,0 +1,45 @@
+{
+  "input_diff_file": "/mnt/extra-maal/skillbridge-backend/data/processed/persona_b_diff_output.json",
+  "active_node_ids": [
+    "OPS-301",
+    "OPS-201",
+    "OPS-103",
+    "OPS-202",
+    "TECH-304",
+    "TECH-303",
+    "TECH-102",
+    "OPS-203",
+    "OPS-102",
+    "OPS-104",
+    "OPS-204",
+    "OPS-302"
+  ],
+  "node_states": {
+    "OPS-301": "assigned",
+    "OPS-201": "assigned",
+    "OPS-103": "prerequisite",
+    "OPS-202": "prerequisite",
+    "TECH-304": "assigned",
+    "TECH-303": "prerequisite",
+    "TECH-102": "prerequisite",
+    "OPS-203": "assigned",
+    "OPS-102": "assigned",
+    "OPS-104": "assigned",
+    "OPS-204": "assigned",
+    "OPS-302": "assigned"
+  },
+  "kahn_order": [
+    "OPS-102",
+    "OPS-203",
+    "OPS-104",
+    "OPS-103",
+    "OPS-204",
+    "OPS-302",
+    "OPS-201",
+    "TECH-102",
+    "OPS-202",
+    "OPS-301",
+    "TECH-303",
+    "TECH-304"
+  ]
+}

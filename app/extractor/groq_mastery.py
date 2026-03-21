@@ -5,11 +5,11 @@ Architecture:
   1. Single Groq call classifies the candidate profile type
   2. Bloom-level decay formula computes mastery per skill
   3. Mention boost for skills explicitly listed in the resume
-  4. Cap/floor at 0.10–0.95
-
-This replaces the old per-skill LLM mastery scoring. One Groq call per
-resume instead of N, consistent scores, and no dependency on per-skill
-context sentences.
+  4. Negation detection: hard-caps skills at 0.45 when resume says
+     "not production", "no experience", "basic only", etc.
+  5. Leadership/scale boost: +0.10 for skills used alongside metrics,
+     "led team", "architected", "enterprise"
+  6. Cap/floor at 0.10–0.95
 """
 
 import json
@@ -57,8 +57,140 @@ BLOOM_DECAY: Dict[int, float] = {
     6: 0.25,   # Creative/Architectural — assume not mastered
 }
 
-MENTION_BOOST: float = 0.15   # Boost for skills explicitly mentioned in resume
-PROJECT_BOOST: float = 0.10   # Boost for skills used in described projects
+MENTION_BOOST: float = 0.15      # Boost for skills explicitly mentioned in resume
+LEADERSHIP_BOOST: float = 0.10   # Boost for skills with leadership/scale signals
+NEGATION_CAP: float = 0.45       # Hard cap when negation context detected
+
+# ── Negation Detection ────────────────────────────────────────────────────────
+# Phrases that indicate the candidate does NOT have deep expertise in a skill.
+# When any of these appear near a skill mention, mastery is hard-capped at 0.45.
+
+NEGATION_PHRASES = [
+    # Strong negations
+    "not production",
+    "no production",
+    "not production-grade",
+    "no production",
+    
+    # Generic non-proficiency
+    "not proficient",
+    "no experience",
+    "no real experience",
+    "zero experience",
+    "unfamiliar with",
+    "not familiar",
+    "no familiarity",
+    
+    # Time/scope bounded
+    "never designed",
+    "never built",
+    "never used",
+    "never worked",
+    "never touched",
+    "never developed",
+    "never implemented",
+    
+    # Hands-on/professional
+    "no hands-on",
+    "no professional",
+    "no work experience",
+    "only theoretical",
+    
+    # Level/capability
+    "basic only",
+    "basic understanding",
+    "limited experience",
+    "minimal experience",
+    "beginner level",
+    "junior level only",
+    
+    # Not expert/advanced
+    "not comfortable",
+    "not expert",
+    "no advanced",
+    "not advanced",
+    "no deep",
+    "not deep",
+    "surface level",
+    
+    # Tool-specific non-proficiency
+    "no pivot tables",
+    "no formal data analysis",
+    
+    # Scope/tool constraints
+    "prototyping only",
+    "small internal tools",
+    "familiar with but",
+    "data entry level only",
+    
+    # Weak signals
+    "only familiar",
+    "only learning",
+    "only briefly",
+    "only exposure",
+    "first exposure",
+    "struggled with",
+    "weak in",
+]
+
+# ── Leadership/Scale Signal Detection ─────────────────────────────────────────
+# Phrases that indicate the candidate has deep, real-world expertise.
+# When these appear near a skill mention, an extra +0.10 boost is applied.
+
+LEADERSHIP_PATTERNS = [
+    # Team leadership
+    r"led\s+(?:the\s+)?(?:team|frontend|backend|architecture|development|engineering|platform)",
+    r"led\s+a\s+team\s+of\s+\d+",
+    r"leading\s+(?:team|development|engineering)",
+    r"managed\s+(?:a\s+)?team\s+of",
+    
+    # Architecture/system design
+    r"architected",
+    r"designed\s+(?:the\s+)?(?:system|architecture|platform|solution)",
+    r"built\s+(?:the\s+)?(?:architecture|system|platform)",
+    r"core\s+(?:system|architecture|component)",
+    
+    # Mentoring
+    r"mentored\s+\d+",
+    r"trained\s+\d+\+?",
+    r"onboarded",
+    
+    # Scale metrics - users/customers
+    r"\d+k\+?\s+(?:users|merchants|customers|transactions)",
+    r"\d+\.?\d*m\+?\s+(?:users|merchants|customers|transactions)",
+    r"million\+?\s+(?:users|customers|merchants)",
+    r"thousands?\s+of\s+(?:users|customers|merchants)",
+    
+    # Business metrics - teams/adoption
+    r"\d+\s+(?:product\s+)?teams",
+    r"adopted\s+by\s+(?:\d+\s+)?(?:multiple|other|various)\s+(?:teams|products|services)",
+    r"cross\s+(?:all|multiple|different)\s+(?:product|teams|services)",
+    
+    # Production scale indicators
+    r"production(?:\s+.{0,30})?(?:system|scale|environment)",
+    r"enterprise\s+(?:saas|application|platform|system|customer)",
+    r"high\s+(?:throughput|traffic|concurrency|scale)",
+    r"99\.\d+%\s+(?:accuracy|uptime|availability|reliability)",
+    
+    # Performance improvements
+    r"(?:reduced|decreased|improved|increased)\s+.{0,30}\d+\s*%",
+    r"zero\s+(?:incidents|downtime|bugs|critical)",
+    
+    # Scope indicators
+    r"daily\s+(?:workflow|use|driver|tool)",
+    r"across\s+(?:all|multiple|different|global)\s+(?:roles|teams|products|regions)",
+    r"core\s+(?:skill|competency|technology)",
+    r"primary\s+(?:skill|technology|tool)",
+    
+    # Promotion/recognition
+    r"promoted\s+\d+\s+(?:times?|levels?)",
+    r"promoted\s+to\s+(?:senior|lead|principal)",
+    
+    # Responsibility breadth
+    r"owned\s+(?:the|full|complete|entire)\s+(?:system|platform|product|codebase)",
+    r"responsible\s+for\s+(?:building|designing|architecting|leading)",
+]
+
 
 _PROFILE_CLASSIFY_PROMPT = """
 You are a resume classification engine. Your sole task is to classify the candidate into exactly one category based on their overall profile.
@@ -140,15 +272,15 @@ def compute_mastery_scores(
     catalog: List[dict],
 ) -> List[dict]:
     """
-    Compute mastery scores using profile classification + bloom decay + mention boost.
+    Compute mastery scores using profile classification + bloom decay + context signals.
 
-    Args:
-        mapped_skills: Merged/deduped skills with taxonomy_id, label, etc.
-        resume_text:   Raw resume text for profile classification and mention detection.
-        catalog:       Full course catalog for bloom level lookup.
-
-    Returns:
-        List of skill dicts with mastery_score populated.
+    Pipeline per skill:
+      1. base_score from profile classification
+      2. × BLOOM_DECAY[bloom_level] from catalog
+      3. + MENTION_BOOST if skill label found in resume
+      4. + LEADERSHIP_BOOST if leadership/scale signals found near skill
+      5. cap at NEGATION_CAP (0.45) if negation phrases found near skill
+      6. clamp to [0.10, 0.95]
     """
     if not mapped_skills:
         return []
@@ -157,22 +289,33 @@ def compute_mastery_scores(
     profile_type, base_score, reasoning = classify_profile(resume_text)
 
     # Step 2: Build bloom-level lookup from catalog
-    # Maps taxonomy_id → lowest bloom_level among courses teaching that skill
     skill_bloom_map = _build_skill_bloom_map(catalog)
 
-    # Step 3: Detect which skills are explicitly mentioned in the resume
-    mentioned_ids = _find_mentioned_skills(mapped_skills, resume_text)
+    # Step 3: Detect mention, negation, and leadership context per skill
+    text_lower = resume_text.lower()
 
-    # Step 4: Compute mastery for each skill
     scored: List[dict] = []
     for skill in mapped_skills:
         tax_id = skill.get("taxonomy_id", "")
         label = skill.get("label", "")
 
         bloom_level = skill_bloom_map.get(tax_id, 3)  # Default to applied level
-        boost = MENTION_BOOST if tax_id in mentioned_ids else 0.0
 
-        mastery = _final_mastery(base_score, bloom_level, boost)
+        # Check if mentioned in resume
+        is_mentioned = _is_skill_mentioned(label, text_lower)
+        mention_boost = MENTION_BOOST if is_mentioned else 0.0
+
+        # Check for negation context around this skill
+        is_negated = _detect_negation_context(label, text_lower)
+
+        # Check for leadership/scale signals around this skill
+        has_leadership = _detect_leadership_signal(label, text_lower)
+        leadership_boost = LEADERSHIP_BOOST if has_leadership and not is_negated else 0.0
+
+        # Compute mastery
+        mastery = _final_mastery(
+            base_score, bloom_level, mention_boost, leadership_boost, is_negated
+        )
 
         scored.append({
             "taxonomy_id": tax_id,
@@ -184,6 +327,15 @@ def compute_mastery_scores(
             "profile_reasoning": reasoning,
         })
 
+        if is_negated:
+            logger.info(
+                "[GroqMastery] NEGATION detected for '%s' — capped at %.2f", label, mastery
+            )
+        if has_leadership:
+            logger.info(
+                "[GroqMastery] LEADERSHIP signal for '%s' — boosted", label
+            )
+
     return scored
 
 
@@ -194,9 +346,6 @@ def _build_skill_bloom_map(catalog: List[dict]) -> Dict[str, int]:
     """
     Build a mapping from taxonomy_id → lowest bloom_level across all courses
     that teach that skill.
-
-    Lower bloom = more foundational. If a skill appears in multiple courses,
-    we use the lowest bloom level for mastery decay (most generous interpretation).
     """
     bloom_map: Dict[str, int] = {}
     for course in catalog:
@@ -207,42 +356,148 @@ def _build_skill_bloom_map(catalog: List[dict]) -> Dict[str, int]:
     return bloom_map
 
 
-def _find_mentioned_skills(
-    skills: List[dict], resume_text: str
-) -> Set[str]:
+def _is_skill_mentioned(label: str, text_lower: str) -> bool:
+    """Check if a skill label appears in the resume text."""
+    label_lower = label.lower().strip()
+    if not label_lower:
+        return False
+
+    if label_lower in text_lower:
+        return True
+
+    # Check base word for multi-word labels (e.g., "react js" → "react")
+    base_label = label_lower.split()[0] if " " in label_lower else label_lower
+    if len(base_label) >= 3 and base_label in text_lower:
+        return True
+
+    return False
+
+
+def _get_skill_context(label: str, text_lower: str, window: int = 400) -> str:
     """
-    Check which skills are explicitly mentioned in the resume text.
-    Returns set of taxonomy_ids that are mentioned.
-
-    Uses simple case-insensitive substring matching on the skill label.
+    Extract the text window surrounding a skill mention in the resume.
+    Returns the surrounding context (up to `window` chars on each side).
+    Returns empty string if skill not found.
+    
+    Tries multiple strategies:
+      1. Exact label match
+      2. Base word match (first word from multi-word labels)
+      3. Search for comma-separated variations
     """
-    mentioned: Set[str] = set()
-    text_lower = resume_text.lower()
+    label_lower = label.lower().strip()
+    if not label_lower:
+        return ""
 
-    for skill in skills:
-        label = skill.get("label", "").lower().strip()
-        if not label:
-            continue
+    # Try exact label first
+    idx = text_lower.find(label_lower)
 
-        # Check if the skill label appears in the resume text
-        if label in text_lower:
-            mentioned.add(skill.get("taxonomy_id", ""))
-            continue
+    # Try base word if exact not found
+    if idx == -1 and " " in label_lower:
+        base = label_lower.split()[0]
+        if len(base) >= 3:
+            idx = text_lower.find(base)
 
-        # Also check common variations (e.g., "react js" → "react", "node js" → "node")
-        base_label = label.split()[0] if " " in label else label
-        if len(base_label) >= 3 and base_label in text_lower:
-            mentioned.add(skill.get("taxonomy_id", ""))
+    # Try individual words separated by slashes/dots (e.g., "c++")
+    if idx == -1 and ("+" in label_lower or "." in label_lower or "#" in label_lower):
+        # For C++, C#, .NET etc, search for first meaningful part
+        search_parts = re.split(r'[+.#]', label_lower)
+        for part in search_parts:
+            if len(part) >= 3:
+                idx = text_lower.find(part)
+                if idx != -1:
+                    break
 
-    return mentioned
+    if idx == -1:
+        return ""
+
+    start = max(0, idx - window)
+    end = min(len(text_lower), idx + len(label_lower) + window)
+    return text_lower[start:end]
 
 
-def _final_mastery(base_score: float, bloom_level: int, mention_boost: float) -> float:
+def _detect_negation_context(label: str, text_lower: str) -> bool:
     """
-    Compute final mastery score with bloom decay and mention boost.
+    Check if a skill is mentioned with negation context in the resume.
 
-    Formula: clamp(base_score * BLOOM_DECAY[bloom] + mention_boost, 0.10, 0.95)
+    Scans a 400-char window around the skill mention for negation phrases
+    like "not production", "no experience", "basic only", etc.
+    
+    Also checks for negation patterns that may precede the skill mention
+    by looking at the full window (before and after).
+
+    Returns True if negation detected — mastery should be hard-capped.
+    """
+    context = _get_skill_context(label, text_lower, window=400)
+    if not context:
+        return False
+
+    # Check for direct phrase matches
+    for phrase in NEGATION_PHRASES:
+        if phrase.lower() in context:
+            logger.debug(
+                "[GroqMastery] Negation phrase '%s' found near '%s'", phrase, label
+            )
+            return True
+
+    # Additional pattern check: look for "no/never/zero ... [skill]" patterns
+    # This catches cases where negation precedes the skill
+    skill_base = label.split()[0].lower() if " " in label else label.lower()
+    negation_words = ["no ", "never ", "zero ", "unfamiliar ", "not "]
+    
+    for neg_word in negation_words:
+        # Look for negation word followed by the skill base word somewhere in context
+        pattern = f"{neg_word}.*{skill_base}"
+        if re.search(pattern, context, re.DOTALL | re.IGNORECASE):
+            logger.debug(
+                "[GroqMastery] Negation pattern '%s.*%s' found in '%s'", neg_word, skill_base, label
+            )
+            return True
+
+    return False
+
+
+def _detect_leadership_signal(label: str, text_lower: str) -> bool:
+    """
+    Check if a skill is mentioned alongside leadership/scale signals.
+
+    Scans a 300-char window around the skill mention for patterns like
+    "led team of 5", "50k+ users", "enterprise SaaS", "architected", etc.
+
+    Returns True if leadership signals found — skill gets a +0.10 boost.
+    """
+    context = _get_skill_context(label, text_lower, window=300)
+    if not context:
+        return False
+
+    for pattern in LEADERSHIP_PATTERNS:
+        if re.search(pattern, context, re.IGNORECASE):
+            logger.debug(
+                "[GroqMastery] Leadership signal '%s' found near '%s'", pattern, label
+            )
+            return True
+
+    return False
+
+
+def _final_mastery(
+    base_score: float,
+    bloom_level: int,
+    mention_boost: float,
+    leadership_boost: float,
+    is_negated: bool,
+) -> float:
+    """
+    Compute final mastery score with bloom decay, boosts, and negation cap.
+
+    Formula:
+      raw = base_score × BLOOM_DECAY[bloom] + mention_boost + leadership_boost
+      if negated: raw = min(raw, NEGATION_CAP)
+      return clamp(raw, 0.10, 0.95)
     """
     decay = BLOOM_DECAY.get(bloom_level, 0.80)
-    raw = (base_score * decay) + mention_boost
+    raw = (base_score * decay) + mention_boost + leadership_boost
+
+    if is_negated:
+        raw = min(raw, NEGATION_CAP)
+
     return round(max(0.10, min(0.95, raw)), 2)

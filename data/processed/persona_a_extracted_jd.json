@@ -1,12 +1,5 @@
 [
   {
-    "taxonomy_id": "KS122QL6NN356RRJT6RV",
-    "taxonomy_source": "emsi",
-    "label": "database design",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
     "taxonomy_id": "KS127296VDYS7ZFWVC46",
     "taxonomy_source": "emsi",
     "label": "node js",
@@ -119,34 +112,6 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS440QS66YCBN23Y8K25",
-    "taxonomy_source": "emsi",
-    "label": "software",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
-    "taxonomy_id": "KS121XY6VSGJ3Z6J82FQ",
-    "taxonomy_source": "emsi",
-    "label": "infrastructure",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
-    "taxonomy_id": "KS120WT63K4HC6NX7QXV",
-    "taxonomy_source": "emsi",
-    "label": "banks",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
-    "taxonomy_id": "KS7R8G2D52QH187SED9R",
-    "taxonomy_source": "emsi",
-    "label": "backend",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
     "taxonomy_id": "KS1217S6P3M284GY3DLN",
     "taxonomy_source": "emsi",
     "label": "design build",
@@ -178,13 +143,6 @@
     "taxonomy_id": "KSY4WFI1S164RQUBSPCC",
     "taxonomy_source": "emsi",
     "label": "docker",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
-    "taxonomy_id": "KS124CH623PFBJS8T5KM",
-    "taxonomy_source": "emsi",
-    "label": "github",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
@@ -245,9 +203,16 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS1226N77K2R22TWDSSP",
+    "taxonomy_id": "KS125746Y5ZDLQ9PGMQ3",
     "taxonomy_source": "emsi",
     "label": "integration tests",
+    "mastery_score": 0.0,
+    "confidence_score": 0.7
+  },
+  {
+    "taxonomy_id": "KS7R8G2D52QH187SED9R",
+    "taxonomy_source": "emsi",
+    "label": "backend",
     "mastery_score": 0.0,
     "confidence_score": 0.7
   },
@@ -301,13 +266,6 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "ESA91D8112EB9ECA3570",
-    "taxonomy_source": "emsi",
-    "label": "git",
-    "mastery_score": 0.0,
-    "confidence_score": 0.7
-  },
-  {
     "taxonomy_id": "KSQY249T7UYPLS6LKBP0",
     "taxonomy_source": "emsi",
     "label": "rebasing",
@@ -336,7 +294,7 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS126HV6CFLVGG8L97CP",
+    "taxonomy_id": "KS127BT6L27S2L1NFFXP",
     "taxonomy_source": "emsi",
     "label": "message queues",
     "mastery_score": 0.0,
@@ -364,7 +322,7 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS1264M6STJ22H7GCK5N",
+    "taxonomy_id": "KS1279P6NWS8ZD651971",
     "taxonomy_source": "emsi",
     "label": "open source",
     "mastery_score": 0.0,
