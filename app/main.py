@@ -21,8 +21,8 @@ from app.extractor.extractor import extract_skills, extract_skills_from_jd
 
 # --- Track 3: Pathing ---
 from app.pathing.dag_builder import build_dag
-from app.pathing.gap_analyzer import compute_skill_gap, get_active_subgraph, MASTERY_THRESHOLD
-from app.pathing.kahn import kahn_priority_sort, compute_priority
+from app.pathing.gap_analyzer import compute_skill_gap, get_active_subgraph
+from app.pathing.kahn import kahn_priority_sort
 from app.pathing.tracer import generate_reasoning_trace
 from app.pathing.pathing import add_skipped_nodes
 from app.catalog.loader import load_catalog
@@ -141,6 +141,29 @@ app.add_middleware(
 @app.get("/health")
 async def health():
     return {"status": "healthy", "version": "2.0.0"}
+
+@app.get("/api/catalog")
+async def get_catalog():
+    """
+    Returns the full course catalog with display metadata.
+    Used by the frontend to resolve course_id → title, hours, difficulty, bloom_level.
+    """
+    catalog = load_catalog()
+    return [
+        {
+            "course_id":       c["course_id"],
+            "title":           c.get("title", c["course_id"]),
+            "description":     c.get("description", ""),
+            "estimated_hours": c.get("estimated_hours", 0),
+            "difficulty":      c.get("difficulty", "Intermediate"),
+            "bloom_level":     c.get("bloom_level", 3),
+            "domain":          c.get("domain", "technical"),
+            "prerequisites":   c.get("prerequisites", []),
+            "skills_taught":   c.get("skills_taught", []),
+            "skill_labels":    c.get("skill_labels", {}),
+        }
+        for c in catalog
+    ]
 
 # ===========================================================================
 # 4.1 HR Management Flow
@@ -290,7 +313,13 @@ async def confirm_resume(request: ResumeConfirmRequest):
 @app.post("/api/pathway/questions")
 async def generate_questions(request: PathwayQuestionsRequest):
     """
-    Generates dynamic preference questions based on the candidate's gap.
+    Generates dynamic preference questions based on the actual content of the
+    candidate's skill gap — not just domain and gap size.
+
+    After computing gap_ids (a list of EMSI taxonomy ID strings), we resolve
+    them back to labels using the confirmed JD skill entries, then inspect
+    which courses in the catalog teach those gap skills to understand the
+    character of the gap (infra-heavy, data-heavy, tool-specific, etc.).
     """
     if request.current_state_id not in DB_SESSIONS:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -298,47 +327,138 @@ async def generate_questions(request: PathwayQuestionsRequest):
         raise HTTPException(status_code=404, detail="JD not found")
 
     current_state = DB_SESSIONS[request.current_state_id]
-    target_jd = DB_JDS[request.jd_id]
-    catalog = load_catalog()
+    target_jd     = DB_JDS[request.jd_id]
+    catalog       = load_catalog()
+    domain        = target_jd["domain"]
 
-    # Use confirmed JD skill IDs directly — no re-extraction
-    required_ids = [s["taxonomy_id"] for s in target_jd["required_skills"]]
-    gap_ids = compute_skill_gap(
+    # Build a lookup from taxonomy_id → label using the confirmed JD skill entries
+    jd_skill_label: Dict[str, str] = {
+        s["taxonomy_id"]: s["label"]
+        for s in target_jd["required_skills"]
+    }
+
+    required_ids = list(jd_skill_label.keys())
+    gap_ids: List[str] = compute_skill_gap(
         current_state["extracted_skills"],
         required_ids,
         catalog,
-        target_jd["domain"]
+        domain,
     )
 
-    # Baseline questions
+    # Resolve gap IDs to lowercase labels for keyword matching
+    gap_labels = {
+        jd_skill_label.get(gid, "").lower()
+        for gid in gap_ids
+        if jd_skill_label.get(gid)
+    }
+
+    # Resolve gap IDs to the courses that teach them — gives us bloom levels,
+    # difficulty, and domain sub-categories to ask smarter questions
+    gap_course_bloom: List[int] = []
+    gap_course_difficulties: List[str] = []
+    for course in catalog:
+        if set(course.get("skills_taught", [])).intersection(gap_ids):
+            gap_course_bloom.append(int(course.get("bloom_level", 3)))
+            gap_course_difficulties.append(
+                course.get("difficulty", "Intermediate").lower()
+            )
+
+    has_gap         = len(gap_ids) > 0
+    has_expert_gap  = any(b >= 4 for b in gap_course_bloom)   # bloom 4-6 in gap
+    has_foundational_gap = any(b <= 2 for b in gap_course_bloom)  # bloom 1-2 in gap
+
+    # Keyword sets for gap content detection
+    infra_keywords  = {"docker", "kubernetes", "linux", "bash", "shell", "ci/cd",
+                       "jenkins", "ansible", "terraform", "devops", "cloud"}
+    data_keywords   = {"sql", "postgresql", "mysql", "mongodb", "data",
+                       "analytics", "pipeline", "etl", "spark", "hadoop"}
+    erp_keywords    = {"sap", "erp", "oracle", "supply chain", "inventory",
+                       "procurement", "warehouse", "logistics"}
+    ml_keywords     = {"machine learning", "deep learning", "pytorch", "tensorflow",
+                       "nlp", "computer vision", "model", "neural"}
+
+    gap_has_infra = bool(gap_labels & infra_keywords) or any(
+        kw in lbl for lbl in gap_labels for kw in infra_keywords
+    )
+    gap_has_data  = bool(gap_labels & data_keywords) or any(
+        kw in lbl for lbl in gap_labels for kw in data_keywords
+    )
+    gap_has_erp   = bool(gap_labels & erp_keywords) or any(
+        kw in lbl for lbl in gap_labels for kw in erp_keywords
+    )
+    gap_has_ml    = bool(gap_labels & ml_keywords) or any(
+        kw in lbl for lbl in gap_labels for kw in ml_keywords
+    )
+
+    # ── Baseline questions (always present) ──────────────────────────────────
     questions: List[Question] = [
         {
-            "id": "weekly_hours",
-            "text": "How much time can you dedicate to learning per week?",
-            "options": ["1-3 hours", "4-6 hours", "7+ hours"]
+            "id":      "weekly_hours",
+            "text":    "How much time can you dedicate to learning per week?",
+            "options": ["1-3 hours", "4-6 hours", "7+ hours"],
         },
         {
-            "id": "learning_style",
-            "text": "What is your preferred learning style?",
-            "options": ["Hands-on projects", "Structured reading", "Video lectures"]
-        }
+            "id":      "learning_style",
+            "text":    "What is your preferred learning style?",
+            "options": ["Hands-on projects", "Structured reading", "Video lectures"],
+        },
     ]
 
-    # FIX 6 (downstream): domain is now always "technical" or "operational"
-    if target_jd["domain"] == "technical" and len(gap_ids) > 0:
+    # ── Dynamic questions based on gap content ────────────────────────────────
+
+    # Depth preference — only meaningful when the gap spans both foundational
+    # and advanced courses, so the candidate can choose where to start
+    if has_gap and has_foundational_gap and has_expert_gap:
         questions.append({
-            "id": "preferred_os",
-            "text": "Which development environment do you prefer for hands-on modules?",
-            "options": ["Linux/Unix", "Windows (WSL)", "Cloud-based IDE"]
+            "id":      "depth_preference",
+            "text":    "Your gap includes both foundational and advanced topics. Where would you like to start?",
+            "options": ["Build foundations first", "Jump straight to advanced topics"],
         })
 
-    if target_jd["domain"] == "operational" and len(gap_ids) > 0:
+    # Infrastructure / DevOps environment question
+    if domain == "technical" and has_gap and gap_has_infra:
         questions.append({
-            "id": "tool_preference",
-            "text": "For supply chain modules, which ERP interface are you most familiar with?",
-            "options": ["SAP", "Oracle", "No preference"]
+            "id":      "preferred_os",
+            "text":    "Several gap topics involve hands-on infrastructure work. Which environment will you use?",
+            "options": ["Linux/Unix", "Windows (WSL)", "Cloud-based IDE"],
         })
 
+    # Data / SQL tooling question
+    if domain == "technical" and has_gap and gap_has_data:
+        questions.append({
+            "id":      "data_tool_preference",
+            "text":    "Your gap includes data or database skills. Which environment are you most comfortable working in?",
+            "options": ["PostgreSQL / MySQL", "Cloud data warehouse (BigQuery, Redshift)", "No preference"],
+        })
+
+    # ML framework preference
+    if domain == "technical" and has_gap and gap_has_ml:
+        questions.append({
+            "id":      "ml_framework",
+            "text":    "Your gap includes machine learning topics. Which framework do you prefer?",
+            "options": ["PyTorch", "TensorFlow / Keras", "No preference — teach me either"],
+        })
+
+    # ERP / operations tool question
+    if domain == "operational" and has_gap and gap_has_erp:
+        questions.append({
+            "id":      "erp_familiarity",
+            "text":    "Your gap includes ERP or supply chain modules. Which system are you most familiar with?",
+            "options": ["SAP", "Oracle", "No prior ERP experience"],
+        })
+
+    # Generic operational gap with no specific ERP signal
+    if domain == "operational" and has_gap and not gap_has_erp:
+        questions.append({
+            "id":      "ops_focus",
+            "text":    "Which operational area do you want to prioritise first?",
+            "options": ["Process & workflow", "Compliance & safety", "Team & people management"],
+        })
+
+    logger.info(
+        "[Questions] %d questions generated for gap of %d skills (domain=%s).",
+        len(questions), len(gap_ids), domain,
+    )
     return {"questions": questions}
 
 
@@ -379,38 +499,14 @@ async def generate_pathway(request: PathwayGenerateRequest):
         node_states = get_active_subgraph(G, skill_gap, extracted_skills, domain_filter)
         active_node_ids = list(node_states.keys())
 
-        # FIX 4: Apply preference multipliers to priority before Kahn's runs
-        weekly_hours_str = preferences.get("weekly_hours", "4-6 hours")
-        learning_style = preferences.get("learning_style", "")
-
-        def preference_multiplier(cid: str) -> float:
-            meta = G.nodes[cid]
-            bloom = int(meta.get("bloom_level", 3))
-            mult = 1.0
-            # Weekly hours: deprioritise long courses when time is tight
-            if weekly_hours_str == "1-3 hours":
-                course_hours = float(meta.get("estimated_hours", 1.0))
-                mult *= 1.0 / (course_hours / 5.0 + 1.0)
-            # Learning style: boost applied/advanced for hands-on, foundational for reading
-            if learning_style == "Hands-on projects" and bloom >= 3:
-                mult *= 1.2
-            elif learning_style == "Structured reading" and bloom <= 2:
-                mult *= 1.1
-            # Domain-specific context boost
-            for pref_key, pref_val in preferences.items():
-                if pref_key not in ("weekly_hours", "learning_style") and pref_val:
-                    if meta.get("domain") == domain_filter:
-                        mult *= 1.15
-                        break  # Apply boost once per course
-            return mult
-
-        # Build metadata with preference-adjusted priorities
+        # Build course metadata for Kahn sort — untouched mastery from confirmed skills
         course_metadata = {}
         gap_set = set(skill_gap)
         for cid in active_node_ids:
             meta = G.nodes[cid]
             taught = meta.get("skills_taught", [])
             gap_count = len([s for s in taught if s in gap_set])
+
             masteries = []
             for tid in taught:
                 m = 0.0
@@ -420,19 +516,13 @@ async def generate_pathway(request: PathwayGenerateRequest):
                         break
                 masteries.append(m)
             avg_mastery = sum(masteries) / len(masteries) if masteries else 0.0
-            hours = float(meta.get("estimated_hours", 1.0))
-
-            # Base priority scaled by preference multiplier
-            base_priority = compute_priority(gap_count, avg_mastery, hours)
-            adjusted_priority = base_priority * preference_multiplier(cid)
 
             course_metadata[cid] = {
                 "prerequisites": meta.get("prerequisites", []),
-                "gap_count": gap_count,
-                "mastery": avg_mastery,
-                "hours": hours,
-                "bloom_level": int(meta.get("bloom_level", 3)),
-                "_adjusted_priority": adjusted_priority,
+                "gap_count":     gap_count,
+                "mastery":       avg_mastery,
+                "hours":         float(meta.get("estimated_hours", 1.0)),
+                "bloom_level":   int(meta.get("bloom_level", 3)),
             }
 
         sorted_ids = kahn_priority_sort(active_node_ids, course_metadata)
