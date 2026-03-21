@@ -100,26 +100,85 @@ def extract_implicit_skills(text: str) -> List[Dict[str, str]]:
         return []
 
     try:
-        pipe      = _get_pipeline()
-        raw_spans = pipe(text)
+        pipe = _get_pipeline()
+        
+        # Split text into manageable chunks to avoid BERT's 512-token limit
+        # 1500 chars is roughly 300-400 tokens, safely below 512.
+        chunks = _chunk_text(text, max_chars=1500)
+        
+        all_raw_spans = []
+        for chunk_text, offset in chunks:
+            if not chunk_text.strip():
+                continue
+                
+            # Process chunk
+            chunk_spans = pipe(chunk_text)
+            
+            # Adjust offsets to be relative to the original full text
+            for span in chunk_spans:
+                span["start"] += offset
+                span["end"]   += offset
+                all_raw_spans.append(span)
 
-        if not raw_spans:
+        if not all_raw_spans:
             logger.info("[JobBERT] No spans returned for input text.")
             return []
 
         # CRITICAL FIX 2: Manually stitch consecutive B-SKILL/I-SKILL spans
-        stitched = _stitch_spans(raw_spans, text)
+        stitched = _stitch_spans(all_raw_spans, text)
         deduped  = _deduplicate(stitched)
 
         # Map each span to EMSI or mark as inferred
         mapped = _map_spans_to_taxonomy(deduped)
 
-        logger.info("[JobBERT] Extracted %d unique skill phrases.", len(mapped))
+        logger.info("[JobBERT] Extracted %d unique skill phrases from %d chunks.", 
+                    len(mapped), len(chunks))
         return mapped
 
     except Exception as exc:
         logger.error("[JobBERT] Extraction failed: %s", exc, exc_info=True)
         return []
+
+
+def _chunk_text(text: str, max_chars: int = 1500) -> List[tuple]:
+    """
+    Split text into chunks of roughly max_chars, attempting to break at
+    newlines or sentence boundaries to preserve context.
+    
+    Returns:
+        List of (chunk_text, original_offset)
+    """
+    chunks = []
+    start = 0
+    
+    while start < len(text):
+        end = start + max_chars
+        if end >= len(text):
+            chunks.append((text[start:], start))
+            break
+            
+        # Try to find a good break point (newline or period)
+        # Scan backwards from 'end' to find a break point
+        break_point = text.rfind("\n", start, end)
+        if break_point == -1 or break_point <= start:
+            # Try period + space
+            break_point = text.rfind(". ", start, end)
+            
+        if break_point == -1 or break_point <= start:
+            # Fallback: break at last space
+            break_point = text.rfind(" ", start, end)
+            
+        if break_point == -1 or break_point <= start:
+            # Extreme fallback: hard break at max_chars
+            break_point = end
+        else:
+            # Include the separator character
+            break_point += 1
+            
+        chunks.append((text[start:break_point], start))
+        start = break_point
+        
+    return chunks
 
 
 def _map_spans_to_taxonomy(spans: List[str]) -> List[Dict[str, str]]:

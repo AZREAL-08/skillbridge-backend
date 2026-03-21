@@ -189,7 +189,7 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "ES84834128DEDF821260",
+    "taxonomy_id": "ES29C56D2465C253FC1D",
     "taxonomy_source": "emsi",
     "label": "cross functional",
     "mastery_score": 0.0,
@@ -224,7 +224,7 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "ES29C56D2465C253FC1D",
+    "taxonomy_id": "ES84834128DEDF821260",
     "taxonomy_source": "emsi",
     "label": "cross functional",
     "mastery_score": 0.0,
@@ -245,7 +245,7 @@
     "confidence_score": 0.7
   },
   {
-    "taxonomy_id": "KS4412Y5Y0F071NJ6S76",
+    "taxonomy_id": "KS4412X7585VPZP35NM9",
     "taxonomy_source": "emsi",
     "label": "management supplier",
     "mastery_score": 0.0,
