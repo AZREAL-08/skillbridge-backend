@@ -52,7 +52,8 @@ class StoredJD(TypedDict):      # NEW in v2.0 (HR Flow)
     role_title: str
     company: str
     department: str
-    domain: Literal["technical", "operational"]
+    domain: Literal["technical", "operations"]
     raw_text: str
     required_skills: List[SkillEntry]
     created_at: str
+    is_deleted: Optional[bool] # For soft-delete support

@@ -7,7 +7,7 @@ import uuid
 import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -16,6 +16,8 @@ from app.state import SkillEntry, StoredJD, PipelineState, CurrentState, TargetS
 
 # --- Track 2: Extractor ---
 from app.extractor.extractor import extract_skills, extract_skills_from_jd
+from app.extractor.file_processor import process_uploaded_file
+from app.extractor.pdf_utils import extract_text_from_pdf
 
 # --- Track 3: Pathing ---
 from app.pathing.pathing import run_pipeline 
@@ -82,6 +84,52 @@ async def health():
     return {"status": "healthy", "version": "2.0.0"}
 
 # ===========================================================================
+# Internal Helpers
+# ===========================================================================
+
+def _get_dynamic_questions(current_skills: List[SkillEntry], target_jd: StoredJD) -> List[Question]:
+    """Helper to generate consistent dynamic questions based on gap."""
+    catalog = load_catalog()
+    required_ids = [s["taxonomy_id"] for s in target_jd["required_skills"]]
+    gap_ids = compute_skill_gap(
+        current_skills, 
+        required_ids, 
+        catalog, 
+        target_jd["domain"]
+    )
+
+    # 1. Baseline Questions
+    questions: List[Question] = [
+        {
+            "id": "weekly_hours",
+            "text": "How much time can you dedicate to learning per week?",
+            "options": ["1-3 hours", "4-6 hours", "7+ hours"]
+        },
+        {
+            "id": "learning_style",
+            "text": "What is your preferred learning style?",
+            "options": ["Hands-on projects", "Structured reading", "Video lectures"]
+        }
+    ]
+
+    # 2. Dynamic Domain-Specific Questions
+    if target_jd["domain"] == "technical" and len(gap_ids) > 0:
+        questions.append({
+            "id": "preferred_os",
+            "text": "Which development environment do you prefer for hands-on modules?",
+            "options": ["Linux/Unix", "Windows (WSL)", "Cloud-based IDE"]
+        })
+    
+    if target_jd["domain"] == "operations" and len(gap_ids) > 0:
+        questions.append({
+            "id": "tool_preference",
+            "text": "For supply chain modules, which ERP interface are you most familiar with?",
+            "options": ["SAP", "Oracle", "No preference"]
+        })
+
+    return questions
+
+# ===========================================================================
 # 4.1 HR Management Flow
 # ===========================================================================
 
@@ -107,7 +155,8 @@ async def confirm_jd(request: JDConfirmRequest):
         "domain": request.domain, # type: ignore
         "raw_text": request.raw_text,
         "required_skills": request.required_skills,
-        "created_at": datetime.now().isoformat()
+        "created_at": datetime.now().isoformat(),
+        "is_deleted": False
     }
     
     DB_JDS[jd_id] = new_jd
@@ -115,7 +164,7 @@ async def confirm_jd(request: JDConfirmRequest):
 
 @app.get("/api/jd/list")
 async def list_jds():
-    """Returns all confirmed JDs for the Candidate dropdown."""
+    """Returns all confirmed StoredJDs (excluding soft-deleted ones)."""
     return [
         {
             "jd_id": jd["jd_id"], 
@@ -124,7 +173,24 @@ async def list_jds():
             "domain": jd["domain"]
         } 
         for jd in DB_JDS.values()
+        if not jd.get("is_deleted", False)
     ]
+
+@app.get("/api/jd/{jd_id}")
+async def get_jd(jd_id: str):
+    """Returns full StoredJD including confirmed required_skills."""
+    if jd_id not in DB_JDS or DB_JDS[jd_id].get("is_deleted", False):
+        raise HTTPException(status_code=404, detail="JD not found")
+    return DB_JDS[jd_id]
+
+@app.delete("/api/jd/{jd_id}")
+async def delete_jd(jd_id: str):
+    """Soft-deletes a JD. Hidden from list but retained for audit."""
+    if jd_id not in DB_JDS:
+        raise HTTPException(status_code=404, detail="JD not found")
+    
+    DB_JDS[jd_id]["is_deleted"] = True
+    return {"jd_id": jd_id, "status": "soft-deleted"}
 
 # ===========================================================================
 # 4.2 Candidate Flow (Resume Processing)
@@ -132,10 +198,41 @@ async def list_jds():
 
 @app.post("/api/resume/upload")
 async def upload_resume(request: ResumeUploadRequest):
-    """Runs full Track 2 pipeline (including Groq mastery scoring)."""
+    """Runs full Track 2 pipeline (including Groq mastery scoring) on raw text."""
     catalog = load_catalog()
     extracted_skills = extract_skills(request.raw_text, catalog)
     return {"extracted_skills": extracted_skills}
+
+@app.post("/api/resume/upload-file")
+async def upload_resume_file(file: UploadFile = File(...)):
+    """
+    Accepts a PDF or TXT file, performs security checks, 
+    extracts text, and runs the extraction pipeline.
+    """
+    try:
+        # 1. Read file bytes
+        content = await file.read()
+
+        # 2. Secure processing and text extraction
+        resume_text = process_uploaded_file(file.filename, content)
+
+        if not resume_text:
+            raise HTTPException(status_code=400, detail="The file appears to be empty or contains no extractable text.")
+
+        # 3. Run extraction pipeline
+        catalog = load_catalog()
+        extracted_skills = extract_skills(resume_text, catalog)
+
+        return {
+            "filename": file.filename,
+            "raw_text": resume_text,
+            "extracted_skills": extracted_skills
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        logger.error(f"File processing failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred while processing your file.")
 
 @app.post("/api/resume/confirm")
 async def confirm_resume(request: ResumeConfirmRequest):
@@ -165,48 +262,8 @@ async def generate_questions(request: PathwayQuestionsRequest):
 
     current_state = DB_SESSIONS[request.current_state_id]
     target_jd = DB_JDS[request.jd_id]
-    catalog = load_catalog()
-
-    # 1. Compute Gap to drive dynamic questions
-    required_ids = [s["taxonomy_id"] for s in target_jd["required_skills"]]
-    gap_ids = compute_skill_gap(
-        current_state["extracted_skills"], 
-        required_ids, 
-        catalog, 
-        target_jd["domain"]
-    )
-
-    # 2. Baseline Questions
-    questions: List[Question] = [
-        {
-            "id": "weekly_hours",
-            "text": "How much time can you dedicate to learning per week?",
-            "options": ["1-3 hours", "4-6 hours", "7+ hours"]
-        },
-        {
-            "id": "learning_style",
-            "text": "What is your preferred learning style?",
-            "options": ["Hands-on projects", "Structured reading", "Video lectures"]
-        }
-    ]
-
-    # 3. Dynamic Domain-Specific Questions
-    # If the gap contains technical skills, ask about environment
-    if target_jd["domain"] == "technical" and len(gap_ids) > 0:
-        questions.append({
-            "id": "preferred_os",
-            "text": "Which development environment do you prefer for hands-on modules?",
-            "options": ["Linux/Unix", "Windows (WSL)", "Cloud-based IDE"]
-        })
     
-    # If it's operations and has a gap, ask about tool preference
-    if target_jd["domain"] == "operations" and len(gap_ids) > 0:
-        questions.append({
-            "id": "tool_preference",
-            "text": "For supply chain modules, which ERP interface are you most familiar with?",
-            "options": ["SAP", "Oracle", "No preference"]
-        })
-
+    questions = _get_dynamic_questions(current_state["extracted_skills"], target_jd)
     return {"questions": questions}
 
 @app.post("/api/pathway/generate")
@@ -223,12 +280,16 @@ async def generate_pathway(request: PathwayGenerateRequest):
     target_jd = DB_JDS[request.jd_id]
 
     try:
+        # Get questions again to include in PipelineState
+        questions = _get_dynamic_questions(current_state["extracted_skills"], target_jd)
+        
         # Run the full pipeline
         result = run_pipeline(
             resume_text=current_state["raw_resume_text"],
             jd_text=target_jd["raw_text"],
             preferences=request.preferences,
-            domain_filter=target_jd["domain"]
+            domain_filter=target_jd["domain"],
+            preference_questions=questions
         )
         return result
     except Exception as e:

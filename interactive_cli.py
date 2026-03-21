@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """
-Interactive SkillBridge CLI
+Interactive SkillBridge CLI v2.0
 Walks you through the full user journey using your local server.
+Supports PDF and TXT resume uploads.
 """
 
 import os
@@ -12,7 +13,6 @@ from rich.console import Console
 from rich.prompt import Prompt, Confirm
 from rich.panel import Panel
 from rich.table import Table
-from rich.progress import Progress, SpinnerColumn, TextColumn
 
 console = Console()
 BASE_URL = "http://localhost:8000"
@@ -29,11 +29,11 @@ def get_file_content(prompt_text):
         path_str = Prompt.ask(prompt_text)
         path = Path(path_str)
         if path.exists() and path.is_file():
-            return path.read_text(encoding="utf-8")
+            return path
         console.print(f"[red]Error: File not found at {path_str}[/red]")
 
 def main():
-    console.print(Panel.fit("🛠️  [bold blue]SkillBridge Interactive Testing Tool[/bold blue]"))
+    console.print(Panel.fit("🛠️  [bold blue]SkillBridge Interactive Testing Tool v2.0[/bold blue]"))
 
     if not check_server():
         console.print("[red]Error: Local server not detected at http://localhost:8000[/red]")
@@ -47,7 +47,8 @@ def main():
         role_title = Prompt.ask("Enter Job Title", default="Software Engineer")
         company = Prompt.ask("Enter Company Name", default="My Company")
         domain = Prompt.ask("Enter Domain", choices=["technical", "operations"], default="technical")
-        jd_text = get_file_content("Enter path to JD .txt file")
+        jd_path = get_file_content("Enter path to JD .txt file")
+        jd_text = jd_path.read_text(encoding="utf-8")
 
         with console.status("[bold green]Extracting skills from JD..."):
             resp = client.post("/api/jd/upload", json={
@@ -75,11 +76,21 @@ def main():
 
         # --- PHASE 2: CANDIDATE RESUME ---
         console.print("\n[bold magenta]--- Phase 2: Candidate Resume Processing ---[/bold magenta]")
-        resume_text = get_file_content("Enter path to your Resume .txt file")
+        console.print("[dim]Supports .pdf and .txt[/dim]")
+        resume_path = get_file_content("Enter path to your Resume file")
 
-        with console.status("[bold magenta]Processing Resume & Computing Mastery (Groq)..."):
-            resp = client.post("/api/resume/upload", json={"raw_text": resume_text})
-            extracted_skills = resp.json()["extracted_skills"]
+        with console.status("[bold magenta]Processing Resume & Secure Extraction..."):
+            with open(resume_path, "rb") as f:
+                files = {"file": (resume_path.name, f, "application/octet-stream")}
+                resp = client.post("/api/resume/upload-file", files=files)
+            
+            if resp.status_code != 200:
+                console.print(f"[red]Error: {resp.text}[/red]")
+                return
+                
+            data = resp.json()
+            extracted_skills = data["extracted_skills"]
+            resume_text = data["raw_text"]
 
         table = Table(title="Extracted Skills & Mastery", show_header=True, header_style="bold cyan")
         table.add_column("Skill")
@@ -136,7 +147,7 @@ def main():
         pathway_table.add_column("Step")
         pathway_table.add_column("Course ID")
         pathway_table.add_column("Status")
-        pathway_table.add_column("Mastery Signal", justify="right")
+        pathway_table.add_column("Mastery", justify="right")
 
         for i, course in enumerate(result["final_pathway"], 1):
             st = course["node_state"].upper()
@@ -149,7 +160,13 @@ def main():
             )
         
         console.print(pathway_table)
-        console.print(f"\n[bold cyan]Efficiency Boost:[/bold cyan] [bold green]{result['metrics']['reduction_pct']}%[/bold green] of unnecessary content removed.")
+        
+        m = result['metrics']
+        console.print(f"\n[bold cyan]Efficiency Metrics:[/bold cyan]")
+        console.print(f"  • Content Reduction: [bold green]{m['reduction_pct']}%[/bold green]")
+        console.print(f"  • Time Commitment: [bold blue]{m['total_hours']} hours[/bold blue]")
+        console.print(f"  • Time Saved: [bold green]{m['saved_hours']} hours[/bold green]")
+        
         console.print("\n[bold blue]Test complete![/bold blue] ✨")
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ Main pathing pipeline — orchestrates extraction, gap analysis, and Kahn sortin
 
 from typing import List, Dict, Any, Optional
 import networkx as nx
-from app.state import PipelineState, CurrentState, TargetState, SkillEntry, PathwayCourse, Metrics
+from app.state import PipelineState, CurrentState, TargetState, SkillEntry, PathwayCourse, Metrics, Question
 from app.pathing.dag_builder import build_dag
 from app.catalog.loader import load_catalog
 from app.pathing.gap_analyzer import compute_skill_gap, get_active_subgraph, MASTERY_THRESHOLD
@@ -66,7 +66,8 @@ def run_pipeline(
     resume_text: str, 
     jd_text: str, 
     preferences: Optional[Dict[str, Any]] = None,
-    domain_filter: Optional[str] = None
+    domain_filter: Optional[str] = None,
+    preference_questions: Optional[List[Question]] = None
 ) -> PipelineState:
     """
     Full pipeline: extract_skills → compute_gap → run_kahn → generate_traces
@@ -125,10 +126,13 @@ def run_pipeline(
     final_pathway: List[PathwayCourse] = []
     reasoning_traces: List[str] = []
     assigned_count = 0
+    total_hours = 0.0
+    saved_hours = 0.0
     
     for cid in sorted_ids:
         state = node_states[cid]
         meta = G.nodes[cid]
+        hours = meta.get('estimated_hours', 1.0)
         
         # Calculate mastery and confidence for this course in the final response
         taught = meta.get('skills_taught', [])
@@ -158,6 +162,7 @@ def run_pipeline(
         
         if state != 'skipped':
             assigned_count += 1
+            total_hours += hours
             # Find a dependent course title for prerequisites
             dep_title = ""
             if state == 'prerequisite':
@@ -170,10 +175,21 @@ def run_pipeline(
                 cid, state, meta, skill_gap, extracted_skills, dep_title
             )
             reasoning_traces.append(trace)
+        else:
+            saved_hours += hours
             
     # 8.5 Add Skipped Nodes that weren't in the active subgraph
     final_pathway = add_skipped_nodes(final_pathway, extracted_skills, required_skills, catalog)
     
+    # Recalculate saved_hours including independent skipped nodes
+    mastered = {s['taxonomy_id'] for s in extracted_skills if s['mastery_score'] >= MASTERY_THRESHOLD}
+    target = set(required_skills)
+    for course in catalog:
+        if course['course_id'] not in sorted_ids:
+            taught = set(course.get('skills_taught', []))
+            if taught.intersection(mastered) and taught.intersection(target):
+                saved_hours += course.get('estimated_hours', 1.0)
+
     # 9. Compute Metrics
     baseline_courses = max(len(catalog), 30) # Always 30 (len of catalog)
     reduction_pct = 0.0
@@ -183,7 +199,9 @@ def run_pipeline(
     metrics: Metrics = {
         "baseline_courses": baseline_courses,
         "assigned_courses": assigned_count,
-        "reduction_pct": round(reduction_pct, 2)
+        "reduction_pct": round(reduction_pct, 2),
+        "total_hours": round(total_hours, 1),
+        "saved_hours": round(saved_hours, 1)
     }
     
     # 10. Assemble State
@@ -199,7 +217,8 @@ def run_pipeline(
         "skill_gap": skill_gap,
         "final_pathway": final_pathway,
         "reasoning_trace": reasoning_traces,
-        "metrics": metrics
+        "metrics": metrics,
+        "preference_questions": preference_questions or []
     }
     
     return state
